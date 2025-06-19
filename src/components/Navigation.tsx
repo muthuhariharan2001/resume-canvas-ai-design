@@ -2,11 +2,19 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Sparkles } from 'lucide-react';
+import { Menu, X, Sparkles, User, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -32,30 +40,52 @@ const Navigation = () => {
             >
               Home
             </Link>
-            <Link
-              to="/dashboard"
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                isActive('/dashboard') ? 'text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              Dashboard
-            </Link>
-            <Link
-              to="/builder"
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                isActive('/builder') ? 'text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              Resume Builder
-            </Link>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" asChild>
-                <Link to="/auth/login">Sign In</Link>
-              </Button>
-              <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                <Link to="/auth/signup">Get Started</Link>
-              </Button>
-            </div>
+            {user && (
+              <>
+                <Link
+                  to="/dashboard"
+                  className={`text-sm font-medium transition-colors hover:text-blue-600 ${
+                    isActive('/dashboard') ? 'text-blue-600' : 'text-gray-700'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/builder"
+                  className={`text-sm font-medium transition-colors hover:text-blue-600 ${
+                    isActive('/builder') ? 'text-blue-600' : 'text-gray-700'
+                  }`}
+                >
+                  Resume Builder
+                </Link>
+              </>
+            )}
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2">
+                    <User className="w-4 h-4" />
+                    <span>{user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Button variant="ghost" asChild>
+                  <Link to="/auth/login">Sign In</Link>
+                </Button>
+                <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Link to="/auth/signup">Get Started</Link>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -83,32 +113,47 @@ const Navigation = () => {
               >
                 Home
               </Link>
-              <Link
-                to="/dashboard"
-                className={`block px-3 py-2 text-base font-medium transition-colors hover:text-blue-600 ${
-                  isActive('/dashboard') ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
-                }`}
-                onClick={() => setIsOpen(false)}
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/builder"
-                className={`block px-3 py-2 text-base font-medium transition-colors hover:text-blue-600 ${
-                  isActive('/builder') ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
-                }`}
-                onClick={() => setIsOpen(false)}
-              >
-                Resume Builder
-              </Link>
-              <div className="px-3 py-2 space-y-2">
-                <Button variant="ghost" className="w-full justify-start" asChild>
-                  <Link to="/auth/login">Sign In</Link>
-                </Button>
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" asChild>
-                  <Link to="/auth/signup">Get Started</Link>
-                </Button>
-              </div>
+              {user && (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className={`block px-3 py-2 text-base font-medium transition-colors hover:text-blue-600 ${
+                      isActive('/dashboard') ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                    }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/builder"
+                    className={`block px-3 py-2 text-base font-medium transition-colors hover:text-blue-600 ${
+                      isActive('/builder') ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                    }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Resume Builder
+                  </Link>
+                </>
+              )}
+              
+              {user ? (
+                <div className="px-3 py-2 space-y-2">
+                  <div className="text-sm text-gray-600">{user.email}</div>
+                  <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <div className="px-3 py-2 space-y-2">
+                  <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link to="/auth/login">Sign In</Link>
+                  </Button>
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" asChild>
+                    <Link to="/auth/signup">Get Started</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
