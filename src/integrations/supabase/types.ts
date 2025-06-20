@@ -48,6 +48,7 @@ export type Database = {
       resumes: {
         Row: {
           created_at: string
+          downloads: number | null
           education: Json | null
           experience: Json | null
           id: string
@@ -57,9 +58,11 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          views: number | null
         }
         Insert: {
           created_at?: string
+          downloads?: number | null
           education?: Json | null
           experience?: Json | null
           id?: string
@@ -69,9 +72,11 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id: string
+          views?: number | null
         }
         Update: {
           created_at?: string
+          downloads?: number | null
           education?: Json | null
           experience?: Json | null
           id?: string
@@ -81,6 +86,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          views?: number | null
         }
         Relationships: []
       }

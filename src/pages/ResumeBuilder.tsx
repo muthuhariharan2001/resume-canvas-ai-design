@@ -151,10 +151,10 @@ const ResumeBuilder = () => {
           setPersonalInfo(resume.personal_info as any);
         }
         if (resume.experience) {
-          setExperience(resume.experience as ExperienceItem[]);
+          setExperience(resume.experience as unknown as ExperienceItem[]);
         }
         if (resume.education) {
-          setEducation(resume.education as EducationItem[]);
+          setEducation(resume.education as unknown as EducationItem[]);
         }
         if (resume.skills) {
           setSkills(resume.skills as string[]);
@@ -424,7 +424,7 @@ const ResumeBuilder = () => {
       }
 
       const canvas = await html2canvas(element, {
-        scale: 1.5,
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         height: element.scrollHeight,
@@ -458,10 +458,16 @@ const ResumeBuilder = () => {
 
       // Track download and increment counter
       if (currentResumeId) {
+        const { data: currentResume } = await supabase
+          .from('resumes')
+          .select('downloads')
+          .eq('id', currentResumeId)
+          .single();
+
         await supabase
           .from('resumes')
           .update({ 
-            downloads: ((await supabase.from('resumes').select('downloads').eq('id', currentResumeId).single()).data?.downloads || 0) + 1 
+            downloads: (currentResume?.downloads || 0) + 1 
           })
           .eq('id', currentResumeId);
       }
@@ -1133,35 +1139,35 @@ const ResumeBuilder = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div id="resume-preview" className={`${getResumeStyle()} rounded-lg p-4 text-xs space-y-3 max-h-[800px] overflow-y-auto`}>
+                  <div id="resume-preview" className={`${getResumeStyle()} rounded-lg p-3 text-[10px] space-y-2 max-h-[800px] overflow-y-auto`}>
                     {/* Header */}
-                    <div className="text-center border-b border-gray-200 pb-3">
-                      <h1 className="text-lg font-bold text-gray-900">
+                    <div className="text-center border-b border-gray-200 pb-2">
+                      <h1 className="text-sm font-bold text-gray-900">
                         {personalInfo.firstName || 'First'} {personalInfo.lastName || 'Last'}
                       </h1>
                       <div className="mt-1 space-y-0.5 text-gray-600">
                         {personalInfo.email && (
                           <div className="flex items-center justify-center space-x-1">
-                            <Mail className="w-2.5 h-2.5" />
-                            <span className="text-xs">{personalInfo.email}</span>
+                            <Mail className="w-2 h-2" />
+                            <span className="text-[8px]">{personalInfo.email}</span>
                           </div>
                         )}
                         {personalInfo.phone && (
                           <div className="flex items-center justify-center space-x-1">
-                            <Phone className="w-2.5 h-2.5" />
-                            <span className="text-xs">{personalInfo.phone}</span>
+                            <Phone className="w-2 h-2" />
+                            <span className="text-[8px]">{personalInfo.phone}</span>
                           </div>
                         )}
                         {personalInfo.location && (
                           <div className="flex items-center justify-center space-x-1">
-                            <MapPin className="w-2.5 h-2.5" />
-                            <span className="text-xs">{personalInfo.location}</span>
+                            <MapPin className="w-2 h-2" />
+                            <span className="text-[8px]">{personalInfo.location}</span>
                           </div>
                         )}
                         {personalInfo.website && (
                           <div className="flex items-center justify-center space-x-1">
-                            <Globe className="w-2.5 h-2.5" />
-                            <span className="text-xs">{personalInfo.website}</span>
+                            <Globe className="w-2 h-2" />
+                            <span className="text-[8px]">{personalInfo.website}</span>
                           </div>
                         )}
                       </div>
@@ -1170,23 +1176,23 @@ const ResumeBuilder = () => {
                     {/* Summary */}
                     {personalInfo.summary && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Professional Summary</h2>
-                        <p className="text-xs text-gray-700 leading-relaxed">{personalInfo.summary}</p>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Professional Summary</h2>
+                        <p className="text-[8px] text-gray-700 leading-relaxed">{personalInfo.summary}</p>
                       </div>
                     )}
 
                     {/* Experience */}
                     {experience.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Experience</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Experience</h2>
                         {experience.map((exp) => (
-                          <div key={exp.id} className="mb-2">
+                          <div key={exp.id} className="mb-1.5">
                             <div className="flex justify-between items-start mb-0.5">
-                              <h3 className="font-medium text-gray-900 text-xs">{exp.title || 'Job Title'}</h3>
-                              <span className="text-xs text-gray-500">{exp.startDate} - {exp.endDate}</span>
+                              <h3 className="font-medium text-gray-900 text-[8px]">{exp.title || 'Job Title'}</h3>
+                              <span className="text-[7px] text-gray-500">{exp.startDate} - {exp.endDate}</span>
                             </div>
-                            <p className="text-xs text-gray-600 mb-0.5">{exp.company || 'Company'} • {exp.location}</p>
-                            <p className="text-xs text-gray-700 leading-relaxed">{exp.description}</p>
+                            <p className="text-[7px] text-gray-600 mb-0.5">{exp.company || 'Company'} • {exp.location}</p>
+                            <p className="text-[7px] text-gray-700 leading-relaxed">{exp.description}</p>
                           </div>
                         ))}
                       </div>
@@ -1195,15 +1201,15 @@ const ResumeBuilder = () => {
                     {/* Projects */}
                     {projects.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Projects</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Projects</h2>
                         {projects.map((proj) => (
-                          <div key={proj.id} className="mb-2">
+                          <div key={proj.id} className="mb-1.5">
                             <div className="flex justify-between items-start mb-0.5">
-                              <h3 className="font-medium text-gray-900 text-xs">{proj.title || 'Project Title'}</h3>
-                              <span className="text-xs text-gray-500">{proj.startDate} - {proj.endDate}</span>
+                              <h3 className="font-medium text-gray-900 text-[8px]">{proj.title || 'Project Title'}</h3>
+                              <span className="text-[7px] text-gray-500">{proj.startDate} - {proj.endDate}</span>
                             </div>
-                            <p className="text-xs text-gray-600 mb-0.5">{proj.technologies}</p>
-                            <p className="text-xs text-gray-700 leading-relaxed">{proj.description}</p>
+                            <p className="text-[7px] text-gray-600 mb-0.5">{proj.technologies}</p>
+                            <p className="text-[7px] text-gray-700 leading-relaxed">{proj.description}</p>
                           </div>
                         ))}
                       </div>
@@ -1212,13 +1218,13 @@ const ResumeBuilder = () => {
                     {/* Education */}
                     {education.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Education</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Education</h2>
                         {education.map((edu) => (
                           <div key={edu.id} className="mb-1">
-                            <h3 className="font-medium text-gray-900 text-xs">{edu.degree || 'Degree'}</h3>
-                            <p className="text-xs text-gray-600">{edu.school || 'School'} • {edu.location}</p>
-                            <p className="text-xs text-gray-500">{edu.startDate} - {edu.endDate}</p>
-                            {edu.gpa && <p className="text-xs text-gray-500">GPA: {edu.gpa}</p>}
+                            <h3 className="font-medium text-gray-900 text-[8px]">{edu.degree || 'Degree'}</h3>
+                            <p className="text-[7px] text-gray-600">{edu.school || 'School'} • {edu.location}</p>
+                            <p className="text-[7px] text-gray-500">{edu.startDate} - {edu.endDate}</p>
+                            {edu.gpa && <p className="text-[7px] text-gray-500">GPA: {edu.gpa}</p>}
                           </div>
                         ))}
                       </div>
@@ -1227,15 +1233,15 @@ const ResumeBuilder = () => {
                     {/* Activities */}
                     {activities.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Activities</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Activities</h2>
                         {activities.map((act) => (
-                          <div key={act.id} className="mb-2">
+                          <div key={act.id} className="mb-1.5">
                             <div className="flex justify-between items-start mb-0.5">
-                              <h3 className="font-medium text-gray-900 text-xs">{act.title || 'Activity'}</h3>
-                              <span className="text-xs text-gray-500">{act.startDate} - {act.endDate}</span>
+                              <h3 className="font-medium text-gray-900 text-[8px]">{act.title || 'Activity'}</h3>
+                              <span className="text-[7px] text-gray-500">{act.startDate} - {act.endDate}</span>
                             </div>
-                            <p className="text-xs text-gray-600 mb-0.5">{act.organization} • {act.role}</p>
-                            <p className="text-xs text-gray-700 leading-relaxed">{act.description}</p>
+                            <p className="text-[7px] text-gray-600 mb-0.5">{act.organization} • {act.role}</p>
+                            <p className="text-[7px] text-gray-700 leading-relaxed">{act.description}</p>
                           </div>
                         ))}
                       </div>
@@ -1244,12 +1250,12 @@ const ResumeBuilder = () => {
                     {/* References */}
                     {references.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">References</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">References</h2>
                         {references.map((ref) => (
                           <div key={ref.id} className="mb-1">
-                            <h3 className="font-medium text-gray-900 text-xs">{ref.name || 'Reference Name'}</h3>
-                            <p className="text-xs text-gray-600">{ref.title} • {ref.company}</p>
-                            <p className="text-xs text-gray-500">{ref.email} • {ref.phone}</p>
+                            <h3 className="font-medium text-gray-900 text-[8px]">{ref.name || 'Reference Name'}</h3>
+                            <p className="text-[7px] text-gray-600">{ref.title} • {ref.company}</p>
+                            <p className="text-[7px] text-gray-500">{ref.email} • {ref.phone}</p>
                           </div>
                         ))}
                       </div>
@@ -1258,10 +1264,10 @@ const ResumeBuilder = () => {
                     {/* Skills */}
                     {skills.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Skills</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Skills</h2>
                         <div className="flex flex-wrap gap-1">
                           {skills.map((skill, index) => (
-                            <span key={index} className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
+                            <span key={index} className="text-[7px] bg-gray-100 text-gray-700 px-1 py-0.5 rounded">
                               {skill}
                             </span>
                           ))}

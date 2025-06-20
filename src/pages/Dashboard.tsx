@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -29,8 +28,8 @@ interface Resume {
   created_at: string;
   updated_at: string;
   personal_info: any;
-  views?: number;
-  downloads?: number;
+  views: number;
+  downloads: number;
 }
 
 interface DashboardStats {
