@@ -297,7 +297,7 @@ const ResumeBuilder = () => {
     setSkills(prev => prev.filter(skill => skill !== skillToRemove));
   };
 
-  // AI Generation functions
+  // Enhanced AI Generation functions
   const generateAISummary = async () => {
     if (!personalInfo.firstName || experience.length === 0) {
       toast({
@@ -365,6 +365,80 @@ const ResumeBuilder = () => {
     });
   };
 
+  const generateAIProjectDescription = async (projId: number) => {
+    const proj = projects.find(p => p.id === projId);
+    if (!proj?.title) {
+      toast({
+        title: "Missing Information",
+        description: "Please add project title first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const aiProjectDescriptions = [
+      `• Developed a full-stack application serving 10,000+ users with 99.9% uptime
+• Implemented responsive design and optimized performance, reducing load times by 40%
+• Integrated third-party APIs and payment systems, increasing user engagement by 65%
+• Built comprehensive testing suite with 95% code coverage`,
+      
+      `• Created scalable microservices architecture handling 1M+ requests per day
+• Designed and implemented RESTful APIs with proper authentication and authorization
+• Optimized database queries and implemented caching, improving response times by 50%
+• Collaborated with cross-functional teams using Agile methodologies`,
+      
+      `• Built modern web application using latest technologies and best practices
+• Implemented real-time features using WebSocket connections and event-driven architecture
+• Designed intuitive user interface with focus on accessibility and user experience
+• Deployed application using CI/CD pipelines and cloud infrastructure`
+    ];
+
+    const randomDescription = aiProjectDescriptions[Math.floor(Math.random() * aiProjectDescriptions.length)];
+    updateProject(projId, 'description', randomDescription);
+    
+    toast({
+      title: "AI Project Description Generated!",
+      description: "Project description has been created with technical achievements.",
+    });
+  };
+
+  const generateAIActivityDescription = async (actId: number) => {
+    const act = activities.find(a => a.id === actId);
+    if (!act?.title || !act?.organization) {
+      toast({
+        title: "Missing Information",
+        description: "Please add activity title and organization first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const aiActivityDescriptions = [
+      `• Organized and led community outreach programs, impacting 500+ individuals
+• Coordinated fundraising events that raised $25,000+ for charitable causes
+• Managed team of 15+ volunteers and established effective communication protocols
+• Developed leadership skills through mentoring and team management responsibilities`,
+      
+      `• Planned and executed large-scale events with 200+ participants
+• Built strategic partnerships with local businesses and community organizations
+• Created marketing campaigns that increased event attendance by 80%
+• Demonstrated strong organizational and project management capabilities`,
+      
+      `• Led volunteer initiatives that provided essential services to underserved communities
+• Developed and implemented training programs for new volunteers
+• Collaborated with diverse stakeholders to achieve common objectives
+• Enhanced communication and interpersonal skills through community engagement`
+    ];
+
+    const randomDescription = aiActivityDescriptions[Math.floor(Math.random() * aiActivityDescriptions.length)];
+    updateActivity(actId, 'description', randomDescription);
+    
+    toast({
+      title: "AI Activity Description Generated!",
+      description: "Activity description has been created highlighting your impact.",
+    });
+  };
+
   const handleSave = async () => {
     try {
       const resumeData = {
@@ -424,7 +498,7 @@ const ResumeBuilder = () => {
       }
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         height: element.scrollHeight,
@@ -439,19 +513,19 @@ const ResumeBuilder = () => {
       });
 
       const imgWidth = 210;
-      const pageHeight = 295;
+      const pageHeight = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Scale down if content is too tall for one page
+      if (imgHeight > pageHeight) {
+        const scaleFactor = pageHeight / imgHeight;
+        const scaledWidth = imgWidth * scaleFactor;
+        const scaledHeight = pageHeight;
+        const xOffset = (imgWidth - scaledWidth) / 2;
+        
+        pdf.addImage(imgData, 'PNG', xOffset, 0, scaledWidth, scaledHeight);
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       }
 
       pdf.save(`${personalInfo.firstName}_${personalInfo.lastName}_Resume.pdf`);
@@ -917,7 +991,18 @@ const ResumeBuilder = () => {
                             </div>
                             
                             <div className="space-y-2">
-                              <Label>Description</Label>
+                              <div className="flex items-center justify-between">
+                                <Label>Description</Label>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => generateAIProjectDescription(proj.id)}
+                                  className="text-xs"
+                                >
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  AI Generate
+                                </Button>
+                              </div>
                               <Textarea 
                                 rows={3} 
                                 value={proj.description} 
@@ -998,7 +1083,18 @@ const ResumeBuilder = () => {
                             </div>
                             
                             <div className="space-y-2">
-                              <Label>Description</Label>
+                              <div className="flex items-center justify-between">
+                                <Label>Description</Label>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => generateAIActivityDescription(act.id)}
+                                  className="text-xs"
+                                >
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  AI Generate
+                                </Button>
+                              </div>
                               <Textarea 
                                 rows={3} 
                                 value={act.description} 
@@ -1129,7 +1225,7 @@ const ResumeBuilder = () => {
               </Card>
             </div>
 
-            {/* Preview Panel */}
+            {/* Enhanced Preview Panel - Optimized for one page */}
             <div className="lg:col-span-1">
               <Card className="border-0 shadow-lg sticky top-24">
                 <CardHeader>
@@ -1139,135 +1235,120 @@ const ResumeBuilder = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div id="resume-preview" className={`${getResumeStyle()} rounded-lg p-3 text-[10px] space-y-2 max-h-[800px] overflow-y-auto`}>
-                    {/* Header */}
-                    <div className="text-center border-b border-gray-200 pb-2">
-                      <h1 className="text-sm font-bold text-gray-900">
+                  <div id="resume-preview" className={`${getResumeStyle()} rounded-lg p-4 text-[9px] space-y-1.5 max-h-[800px] overflow-y-auto leading-tight`}>
+                    {/* Compact Header */}
+                    <div className="text-center border-b border-gray-200 pb-1.5">
+                      <h1 className="text-[11px] font-bold text-gray-900 mb-0.5">
                         {personalInfo.firstName || 'First'} {personalInfo.lastName || 'Last'}
                       </h1>
-                      <div className="mt-1 space-y-0.5 text-gray-600">
+                      <div className="flex justify-center space-x-3 text-[7px] text-gray-600">
                         {personalInfo.email && (
-                          <div className="flex items-center justify-center space-x-1">
+                          <div className="flex items-center space-x-0.5">
                             <Mail className="w-2 h-2" />
-                            <span className="text-[8px]">{personalInfo.email}</span>
+                            <span>{personalInfo.email}</span>
                           </div>
                         )}
                         {personalInfo.phone && (
-                          <div className="flex items-center justify-center space-x-1">
+                          <div className="flex items-center space-x-0.5">
                             <Phone className="w-2 h-2" />
-                            <span className="text-[8px]">{personalInfo.phone}</span>
+                            <span>{personalInfo.phone}</span>
                           </div>
                         )}
                         {personalInfo.location && (
-                          <div className="flex items-center justify-center space-x-1">
+                          <div className="flex items-center space-x-0.5">
                             <MapPin className="w-2 h-2" />
-                            <span className="text-[8px]">{personalInfo.location}</span>
-                          </div>
-                        )}
-                        {personalInfo.website && (
-                          <div className="flex items-center justify-center space-x-1">
-                            <Globe className="w-2 h-2" />
-                            <span className="text-[8px]">{personalInfo.website}</span>
+                            <span>{personalInfo.location}</span>
                           </div>
                         )}
                       </div>
+                      {personalInfo.website && (
+                        <div className="flex items-center justify-center space-x-0.5 text-[7px] text-gray-600 mt-0.5">
+                          <Globe className="w-2 h-2" />
+                          <span>{personalInfo.website}</span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Summary */}
+                    {/* Compact Summary */}
                     {personalInfo.summary && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Professional Summary</h2>
-                        <p className="text-[8px] text-gray-700 leading-relaxed">{personalInfo.summary}</p>
+                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">SUMMARY</h2>
+                        <p className="text-[7px] text-gray-700 leading-tight">{personalInfo.summary}</p>
                       </div>
                     )}
 
-                    {/* Experience */}
+                    {/* Compact Experience */}
                     {experience.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Experience</h2>
-                        {experience.map((exp) => (
-                          <div key={exp.id} className="mb-1.5">
-                            <div className="flex justify-between items-start mb-0.5">
+                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">EXPERIENCE</h2>
+                        {experience.slice(0, 3).map((exp) => (
+                          <div key={exp.id} className="mb-1">
+                            <div className="flex justify-between items-start">
                               <h3 className="font-medium text-gray-900 text-[8px]">{exp.title || 'Job Title'}</h3>
-                              <span className="text-[7px] text-gray-500">{exp.startDate} - {exp.endDate}</span>
+                              <span className="text-[6px] text-gray-500">{exp.startDate} - {exp.endDate}</span>
                             </div>
-                            <p className="text-[7px] text-gray-600 mb-0.5">{exp.company || 'Company'} • {exp.location}</p>
-                            <p className="text-[7px] text-gray-700 leading-relaxed">{exp.description}</p>
+                            <p className="text-[7px] text-gray-600">{exp.company || 'Company'} • {exp.location}</p>
+                            <p className="text-[6px] text-gray-700 leading-tight">{exp.description}</p>
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {/* Projects */}
+                    {/* Compact Projects */}
                     {projects.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Projects</h2>
-                        {projects.map((proj) => (
-                          <div key={proj.id} className="mb-1.5">
-                            <div className="flex justify-between items-start mb-0.5">
+                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">PROJECTS</h2>
+                        {projects.slice(0, 2).map((proj) => (
+                          <div key={proj.id} className="mb-1">
+                            <div className="flex justify-between items-start">
                               <h3 className="font-medium text-gray-900 text-[8px]">{proj.title || 'Project Title'}</h3>
-                              <span className="text-[7px] text-gray-500">{proj.startDate} - {proj.endDate}</span>
+                              <span className="text-[6px] text-gray-500">{proj.startDate} - {proj.endDate}</span>
                             </div>
-                            <p className="text-[7px] text-gray-600 mb-0.5">{proj.technologies}</p>
-                            <p className="text-[7px] text-gray-700 leading-relaxed">{proj.description}</p>
+                            <p className="text-[6px] text-gray-600">{proj.technologies}</p>
+                            <p className="text-[6px] text-gray-700 leading-tight">{proj.description}</p>
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {/* Education */}
+                    {/* Compact Education */}
                     {education.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Education</h2>
-                        {education.map((edu) => (
-                          <div key={edu.id} className="mb-1">
+                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">EDUCATION</h2>
+                        {education.slice(0, 2).map((edu) => (
+                          <div key={edu.id} className="mb-0.5">
                             <h3 className="font-medium text-gray-900 text-[8px]">{edu.degree || 'Degree'}</h3>
                             <p className="text-[7px] text-gray-600">{edu.school || 'School'} • {edu.location}</p>
-                            <p className="text-[7px] text-gray-500">{edu.startDate} - {edu.endDate}</p>
-                            {edu.gpa && <p className="text-[7px] text-gray-500">GPA: {edu.gpa}</p>}
+                            <p className="text-[6px] text-gray-500">{edu.startDate} - {edu.endDate}</p>
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {/* Activities */}
+                    {/* Compact Activities */}
                     {activities.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Activities</h2>
-                        {activities.map((act) => (
-                          <div key={act.id} className="mb-1.5">
-                            <div className="flex justify-between items-start mb-0.5">
+                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">ACTIVITIES</h2>
+                        {activities.slice(0, 2).map((act) => (
+                          <div key={act.id} className="mb-1">
+                            <div className="flex justify-between items-start">
                               <h3 className="font-medium text-gray-900 text-[8px]">{act.title || 'Activity'}</h3>
-                              <span className="text-[7px] text-gray-500">{act.startDate} - {act.endDate}</span>
+                              <span className="text-[6px] text-gray-500">{act.startDate} - {act.endDate}</span>
                             </div>
-                            <p className="text-[7px] text-gray-600 mb-0.5">{act.organization} • {act.role}</p>
-                            <p className="text-[7px] text-gray-700 leading-relaxed">{act.description}</p>
+                            <p className="text-[6px] text-gray-600">{act.organization} • {act.role}</p>
+                            <p className="text-[6px] text-gray-700 leading-tight">{act.description}</p>
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {/* References */}
-                    {references.length > 0 && (
-                      <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">References</h2>
-                        {references.map((ref) => (
-                          <div key={ref.id} className="mb-1">
-                            <h3 className="font-medium text-gray-900 text-[8px]">{ref.name || 'Reference Name'}</h3>
-                            <p className="text-[7px] text-gray-600">{ref.title} • {ref.company}</p>
-                            <p className="text-[7px] text-gray-500">{ref.email} • {ref.phone}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Skills */}
+                    {/* Compact Skills */}
                     {skills.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-1 text-[10px]">Skills</h2>
-                        <div className="flex flex-wrap gap-1">
-                          {skills.map((skill, index) => (
-                            <span key={index} className="text-[7px] bg-gray-100 text-gray-700 px-1 py-0.5 rounded">
+                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">SKILLS</h2>
+                        <div className="flex flex-wrap gap-0.5">
+                          {skills.slice(0, 12).map((skill, index) => (
+                            <span key={index} className="text-[6px] bg-gray-100 text-gray-700 px-1 py-0.5 rounded">
                               {skill}
                             </span>
                           ))}

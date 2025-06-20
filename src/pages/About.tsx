@@ -1,9 +1,7 @@
 
-import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Users, Target, Award, ArrowRight } from 'lucide-react';
+import { Users, Target, Award, Globe } from 'lucide-react';
 
 const About = () => {
   return (
@@ -11,99 +9,125 @@ const About = () => {
       <Navigation />
       
       <div className="pt-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
-          <div className="text-center py-16">
-            <h1 className="text-4xl font-bold text-gray-900 mb-6">
-              About AI Resume Builder
+          <div className="text-center mb-16">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              About Resume<span className="text-blue-600">AI</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We're on a mission to democratize career success by making professional resume creation accessible to everyone through the power of artificial intelligence.
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              We're revolutionizing the way professionals create resumes by combining cutting-edge AI technology 
+              with intuitive design to help you land your dream job.
             </p>
           </div>
 
           {/* Mission Section */}
-          <Card className="mb-12 border-0 shadow-lg">
-            <CardContent className="p-8">
-              <div className="flex items-center mb-6">
-                <Target className="w-8 h-8 text-blue-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">Our Mission</h2>
-              </div>
-              <p className="text-gray-600 text-lg leading-relaxed">
-                At AI Resume Builder, we believe that everyone deserves a chance to showcase their best professional self. 
-                Traditional resume writing can be time-consuming, expensive, and often doesn't capture the full potential 
-                of a candidate's experience. Our AI-powered platform levels the playing field by providing intelligent, 
-                personalized resume creation tools that help job seekers present their qualifications in the most compelling way possible.
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
+              <p className="text-lg text-gray-600 mb-6">
+                At ResumeAI, we believe that everyone deserves the opportunity to present their best professional self. 
+                Our mission is to democratize access to high-quality resume creation tools powered by artificial intelligence.
               </p>
-            </CardContent>
-          </Card>
-
-          {/* Values Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6 text-center">
-                <Sparkles className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Innovation</h3>
-                <p className="text-gray-600">
-                  We leverage cutting-edge AI technology to continuously improve and personalize the resume creation experience.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6 text-center">
-                <Users className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Accessibility</h3>
-                <p className="text-gray-600">
-                  Professional resume creation should be available to everyone, regardless of their background or budget.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6 text-center">
-                <Award className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Excellence</h3>
-                <p className="text-gray-600">
-                  We're committed to delivering the highest quality tools and support to help you succeed in your career journey.
-                </p>
-              </CardContent>
-            </Card>
+              <p className="text-lg text-gray-600">
+                We're not just building a resume builder - we're creating a platform that understands your career journey 
+                and helps you articulate your value proposition in the most compelling way possible.
+              </p>
+            </div>
+            <div className="flex items-center justify-center">
+              <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg p-8">
+                <Target className="w-24 h-24 text-blue-600 mx-auto" />
+              </div>
+            </div>
           </div>
 
-          {/* Story Section */}
-          <Card className="mb-12 border-0 shadow-lg">
-            <CardContent className="p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Our Story</h2>
-              <p className="text-gray-600 text-lg leading-relaxed mb-4">
-                Founded in 2024, AI Resume Builder was born from the frustration of watching talented individuals 
-                struggle to effectively communicate their worth on paper. Our founding team, composed of HR professionals, 
-                software engineers, and career coaches, recognized that traditional resume writing methods were outdated 
-                and often ineffective in today's competitive job market.
-              </p>
-              <p className="text-gray-600 text-lg leading-relaxed">
-                By combining decades of recruitment experience with advanced artificial intelligence, we've created 
-                a platform that not only makes resume creation faster and easier but also significantly more effective. 
-                Today, we're proud to serve thousands of professionals worldwide, helping them land interviews and 
-                advance their careers.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Values Section */}
+          <div className="mb-20">
+            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Our Values</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <Card className="border-0 shadow-lg hover-lift">
+                <CardContent className="p-8 text-center">
+                  <Users className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">User-Centric</h3>
+                  <p className="text-gray-600">
+                    Every feature we build is designed with our users in mind. Your success is our success.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-0 shadow-lg hover-lift">
+                <CardContent className="p-8 text-center">
+                  <Award className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Excellence</h3>
+                  <p className="text-gray-600">
+                    We strive for excellence in everything we do, from our AI algorithms to our user experience.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-0 shadow-lg hover-lift">
+                <CardContent className="p-8 text-center">
+                  <Globe className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Accessibility</h3>
+                  <p className="text-gray-600">
+                    Professional resume creation should be accessible to everyone, regardless of background or experience.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Team Section */}
+          <div className="mb-20">
+            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Our Story</h2>
+            <div className="max-w-4xl mx-auto">
+              <Card className="border-0 shadow-lg">
+                <CardContent className="p-8">
+                  <p className="text-lg text-gray-600 mb-6">
+                    ResumeAI was born from a simple observation: despite the abundance of resume templates and builders, 
+                    most people still struggle to create compelling resumes that truly represent their capabilities and achievements.
+                  </p>
+                  <p className="text-lg text-gray-600 mb-6">
+                    Our founding team, comprised of former recruiters, HR professionals, and AI engineers, recognized that 
+                    the missing piece wasn't just better templates or easier editing tools - it was intelligent guidance 
+                    that could help users understand what makes a resume effective.
+                  </p>
+                  <p className="text-lg text-gray-600">
+                    Today, we're proud to serve thousands of professionals worldwide, helping them craft resumes that 
+                    get noticed by recruiters and hiring managers at top companies including Fortune 500 enterprises 
+                    and innovative startups.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Stats Section */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">50,000+</div>
+              <div className="text-gray-600">Resumes Created</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">85%</div>
+              <div className="text-gray-600">Interview Rate</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600 mb-2">120+</div>
+              <div className="text-gray-600">Countries Served</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-orange-600 mb-2">4.9/5</div>
+              <div className="text-gray-600">User Rating</div>
+            </div>
+          </div>
 
           {/* CTA Section */}
           <div className="text-center py-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Ready to Build Your Perfect Resume?
-            </h2>
-            <p className="text-xl text-gray-600 mb-8">
-              Join thousands of professionals who've already transformed their careers with AI Resume Builder.
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Ready to Transform Your Career?</h2>
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Join thousands of professionals who have successfully landed their dream jobs with ResumeAI.
             </p>
-            <Button size="lg" asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-              <Link to="/auth/signup">
-                Get Started for Free
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
           </div>
         </div>
       </div>
