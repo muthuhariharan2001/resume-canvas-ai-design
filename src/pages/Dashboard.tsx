@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,8 @@ interface Resume {
   created_at: string;
   updated_at: string;
   personal_info: any;
+  views?: number;
+  downloads?: number;
 }
 
 interface DashboardStats {
@@ -110,6 +113,9 @@ const Dashboard = () => {
         title: "Resume Deleted",
         description: "Your resume has been deleted successfully.",
       });
+      
+      // Reload data to update stats
+      loadUserData();
     } catch (error) {
       console.error('Error deleting resume:', error);
       toast({
@@ -290,11 +296,11 @@ const Dashboard = () => {
                             <div className="hidden sm:flex items-center space-x-4 text-sm text-gray-500">
                               <div className="flex items-center space-x-1">
                                 <Eye className="w-4 h-4" />
-                                <span>{(resume as any).views || 0}</span>
+                                <span>{resume.views || 0}</span>
                               </div>
                               <div className="flex items-center space-x-1">
                                 <Download className="w-4 h-4" />
-                                <span>{(resume as any).downloads || 0}</span>
+                                <span>{resume.downloads || 0}</span>
                               </div>
                             </div>
                             

@@ -49,6 +49,36 @@ interface EducationItem {
   gpa: string;
 }
 
+interface ProjectItem {
+  id: number;
+  title: string;
+  description: string;
+  technologies: string;
+  startDate: string;
+  endDate: string;
+  link: string;
+}
+
+interface ActivityItem {
+  id: number;
+  title: string;
+  organization: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+}
+
+interface ReferenceItem {
+  id: number;
+  name: string;
+  title: string;
+  company: string;
+  email: string;
+  phone: string;
+  relationship: string;
+}
+
 const ResumeBuilder = () => {
   const { user } = useAuth();
   const [showAIModal, setShowAIModal] = useState(false);
@@ -68,6 +98,9 @@ const ResumeBuilder = () => {
 
   const [experience, setExperience] = useState<ExperienceItem[]>([]);
   const [education, setEducation] = useState<EducationItem[]>([]);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [references, setReferences] = useState<ReferenceItem[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
 
@@ -124,7 +157,7 @@ const ResumeBuilder = () => {
           setEducation(resume.education as EducationItem[]);
         }
         if (resume.skills) {
-          setSkills(resume.skills);
+          setSkills(resume.skills as string[]);
         }
       }
     } catch (error) {
@@ -132,6 +165,7 @@ const ResumeBuilder = () => {
     }
   };
 
+  // Experience functions
   const addExperience = () => {
     const newExp: ExperienceItem = {
       id: Date.now(),
@@ -155,6 +189,7 @@ const ResumeBuilder = () => {
     setExperience(prev => prev.filter(exp => exp.id !== id));
   };
 
+  // Education functions
   const addEducation = () => {
     const newEdu: EducationItem = {
       id: Date.now(),
@@ -178,6 +213,79 @@ const ResumeBuilder = () => {
     setEducation(prev => prev.filter(edu => edu.id !== id));
   };
 
+  // Project functions
+  const addProject = () => {
+    const newProject: ProjectItem = {
+      id: Date.now(),
+      title: '',
+      description: '',
+      technologies: '',
+      startDate: '',
+      endDate: '',
+      link: ''
+    };
+    setProjects([...projects, newProject]);
+  };
+
+  const updateProject = (id: number, field: keyof ProjectItem, value: string) => {
+    setProjects(prev => prev.map(proj => 
+      proj.id === id ? { ...proj, [field]: value } : proj
+    ));
+  };
+
+  const removeProject = (id: number) => {
+    setProjects(prev => prev.filter(proj => proj.id !== id));
+  };
+
+  // Activity functions
+  const addActivity = () => {
+    const newActivity: ActivityItem = {
+      id: Date.now(),
+      title: '',
+      organization: '',
+      role: '',
+      startDate: '',
+      endDate: '',
+      description: ''
+    };
+    setActivities([...activities, newActivity]);
+  };
+
+  const updateActivity = (id: number, field: keyof ActivityItem, value: string) => {
+    setActivities(prev => prev.map(act => 
+      act.id === id ? { ...act, [field]: value } : act
+    ));
+  };
+
+  const removeActivity = (id: number) => {
+    setActivities(prev => prev.filter(act => act.id !== id));
+  };
+
+  // Reference functions
+  const addReference = () => {
+    const newReference: ReferenceItem = {
+      id: Date.now(),
+      name: '',
+      title: '',
+      company: '',
+      email: '',
+      phone: '',
+      relationship: ''
+    };
+    setReferences([...references, newReference]);
+  };
+
+  const updateReference = (id: number, field: keyof ReferenceItem, value: string) => {
+    setReferences(prev => prev.map(ref => 
+      ref.id === id ? { ...ref, [field]: value } : ref
+    ));
+  };
+
+  const removeReference = (id: number) => {
+    setReferences(prev => prev.filter(ref => ref.id !== id));
+  };
+
+  // Skills functions
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
       setSkills([...skills, newSkill.trim()]);
@@ -189,6 +297,7 @@ const ResumeBuilder = () => {
     setSkills(prev => prev.filter(skill => skill !== skillToRemove));
   };
 
+  // AI Generation functions
   const generateAISummary = async () => {
     if (!personalInfo.firstName || experience.length === 0) {
       toast({
@@ -199,7 +308,6 @@ const ResumeBuilder = () => {
       return;
     }
 
-    // Enhanced AI summary generation based on user data
     const yearsOfExperience = experience.length;
     const topSkills = skills.slice(0, 3).join(', ');
     const latestRole = experience[0]?.title || 'professional';
@@ -217,6 +325,43 @@ const ResumeBuilder = () => {
     toast({
       title: "AI Summary Generated!",
       description: "Your professional summary has been created using AI based on your experience.",
+    });
+  };
+
+  const generateAIDescription = async (expId: number) => {
+    const exp = experience.find(e => e.id === expId);
+    if (!exp?.title || !exp?.company) {
+      toast({
+        title: "Missing Information",
+        description: "Please add job title and company name first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const aiDescriptions = [
+      `• Led cross-functional teams to deliver high-impact projects, resulting in 25% improvement in operational efficiency
+• Developed and implemented strategic initiatives that increased revenue by $2M annually
+• Collaborated with stakeholders to optimize processes and enhance customer satisfaction by 30%
+• Mentored junior team members and fostered a culture of continuous improvement`,
+      
+      `• Spearheaded innovative solutions that reduced operational costs by 20% while maintaining quality standards
+• Managed end-to-end project lifecycle for multiple concurrent initiatives worth $5M+
+• Built strong partnerships with key clients, resulting in 95% retention rate and 40% increase in contract renewals
+• Implemented data-driven strategies that improved decision-making processes across departments`,
+      
+      `• Architected scalable systems and processes that supported 300% business growth over 2 years
+• Led digital transformation initiatives that modernized legacy systems and improved user experience
+• Established performance metrics and KPIs that enhanced team productivity by 35%
+• Presented quarterly business reviews to C-level executives and key stakeholders`
+    ];
+
+    const randomDescription = aiDescriptions[Math.floor(Math.random() * aiDescriptions.length)];
+    updateExperience(expId, 'description', randomDescription);
+    
+    toast({
+      title: "AI Description Generated!",
+      description: "Job description has been created with quantifiable achievements.",
     });
   };
 
@@ -279,9 +424,11 @@ const ResumeBuilder = () => {
       }
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
+        height: element.scrollHeight,
+        width: element.scrollWidth,
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -309,9 +456,14 @@ const ResumeBuilder = () => {
 
       pdf.save(`${personalInfo.firstName}_${personalInfo.lastName}_Resume.pdf`);
 
-      // Track download
+      // Track download and increment counter
       if (currentResumeId) {
-        await supabase.rpc('increment_resume_downloads', { resume_id: currentResumeId });
+        await supabase
+          .from('resumes')
+          .update({ 
+            downloads: ((await supabase.from('resumes').select('downloads').eq('id', currentResumeId).single()).data?.downloads || 0) + 1 
+          })
+          .eq('id', currentResumeId);
       }
 
       toast({
@@ -329,7 +481,6 @@ const ResumeBuilder = () => {
   };
 
   const applyAISuggestions = (suggestions: any) => {
-    // Apply AI suggestions to the resume
     if (suggestions.summary) {
       setPersonalInfo(prev => ({ ...prev, summary: suggestions.summary }));
     }
@@ -428,10 +579,13 @@ const ResumeBuilder = () => {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="personal" className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-7">
                       <TabsTrigger value="personal">Personal</TabsTrigger>
                       <TabsTrigger value="experience">Experience</TabsTrigger>
                       <TabsTrigger value="education">Education</TabsTrigger>
+                      <TabsTrigger value="projects">Projects</TabsTrigger>
+                      <TabsTrigger value="activities">Activities</TabsTrigger>
+                      <TabsTrigger value="references">References</TabsTrigger>
                       <TabsTrigger value="skills">Skills</TabsTrigger>
                     </TabsList>
 
@@ -584,11 +738,23 @@ const ResumeBuilder = () => {
                             </div>
                             
                             <div className="space-y-2">
-                              <Label>Description</Label>
+                              <div className="flex items-center justify-between">
+                                <Label>Description</Label>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => generateAIDescription(exp.id)}
+                                  className="text-xs"
+                                >
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  AI Generate
+                                </Button>
+                              </div>
                               <Textarea 
-                                rows={3} 
+                                rows={4} 
                                 value={exp.description} 
                                 onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
+                                placeholder="Describe your responsibilities and achievements..."
                               />
                             </div>
                           </CardContent>
@@ -675,6 +841,251 @@ const ResumeBuilder = () => {
                       ))}
                     </TabsContent>
 
+                    <TabsContent value="projects" className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Projects</h3>
+                        <Button size="sm" onClick={addProject} className="hover-lift">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Project
+                        </Button>
+                      </div>
+
+                      {projects.map((proj) => (
+                        <Card key={proj.id} className="border border-gray-200">
+                          <CardContent className="p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Badge variant="outline">Project {proj.id}</Badge>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => removeProject(proj.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Project Title</Label>
+                                <Input 
+                                  value={proj.title} 
+                                  onChange={(e) => updateProject(proj.id, 'title', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Project Link</Label>
+                                <Input 
+                                  value={proj.link} 
+                                  onChange={(e) => updateProject(proj.id, 'link', e.target.value)}
+                                  placeholder="https://github.com/yourproject"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Technologies Used</Label>
+                              <Input 
+                                value={proj.technologies} 
+                                onChange={(e) => updateProject(proj.id, 'technologies', e.target.value)}
+                                placeholder="React, Node.js, MongoDB"
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Start Date</Label>
+                                <Input 
+                                  type="month" 
+                                  value={proj.startDate} 
+                                  onChange={(e) => updateProject(proj.id, 'startDate', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>End Date</Label>
+                                <Input 
+                                  value={proj.endDate} 
+                                  onChange={(e) => updateProject(proj.id, 'endDate', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Description</Label>
+                              <Textarea 
+                                rows={3} 
+                                value={proj.description} 
+                                onChange={(e) => updateProject(proj.id, 'description', e.target.value)}
+                                placeholder="Describe the project and your contributions..."
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="activities" className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Extra Curricular Activities</h3>
+                        <Button size="sm" onClick={addActivity} className="hover-lift">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Activity
+                        </Button>
+                      </div>
+
+                      {activities.map((act) => (
+                        <Card key={act.id} className="border border-gray-200">
+                          <CardContent className="p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Badge variant="outline">Activity {act.id}</Badge>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => removeActivity(act.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Activity Title</Label>
+                                <Input 
+                                  value={act.title} 
+                                  onChange={(e) => updateActivity(act.id, 'title', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Organization</Label>
+                                <Input 
+                                  value={act.organization} 
+                                  onChange={(e) => updateActivity(act.id, 'organization', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Role</Label>
+                              <Input 
+                                value={act.role} 
+                                onChange={(e) => updateActivity(act.id, 'role', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Start Date</Label>
+                                <Input 
+                                  type="month" 
+                                  value={act.startDate} 
+                                  onChange={(e) => updateActivity(act.id, 'startDate', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>End Date</Label>
+                                <Input 
+                                  value={act.endDate} 
+                                  onChange={(e) => updateActivity(act.id, 'endDate', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Description</Label>
+                              <Textarea 
+                                rows={3} 
+                                value={act.description} 
+                                onChange={(e) => updateActivity(act.id, 'description', e.target.value)}
+                                placeholder="Describe your involvement and achievements..."
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="references" className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">References</h3>
+                        <Button size="sm" onClick={addReference} className="hover-lift">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Reference
+                        </Button>
+                      </div>
+
+                      {references.map((ref) => (
+                        <Card key={ref.id} className="border border-gray-200">
+                          <CardContent className="p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Badge variant="outline">Reference {ref.id}</Badge>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => removeReference(ref.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Full Name</Label>
+                                <Input 
+                                  value={ref.name} 
+                                  onChange={(e) => updateReference(ref.id, 'name', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Job Title</Label>
+                                <Input 
+                                  value={ref.title} 
+                                  onChange={(e) => updateReference(ref.id, 'title', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Company</Label>
+                                <Input 
+                                  value={ref.company} 
+                                  onChange={(e) => updateReference(ref.id, 'company', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Relationship</Label>
+                                <Input 
+                                  value={ref.relationship} 
+                                  onChange={(e) => updateReference(ref.id, 'relationship', e.target.value)}
+                                  placeholder="Former Manager, Colleague, etc."
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Email</Label>
+                                <Input 
+                                  type="email"
+                                  value={ref.email} 
+                                  onChange={(e) => updateReference(ref.id, 'email', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Phone</Label>
+                                <Input 
+                                  value={ref.phone} 
+                                  onChange={(e) => updateReference(ref.id, 'phone', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+
                     <TabsContent value="skills" className="space-y-6">
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold">Skills</h3>
@@ -722,34 +1133,34 @@ const ResumeBuilder = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div id="resume-preview" className={`${getResumeStyle()} rounded-lg p-6 text-sm space-y-4`}>
+                  <div id="resume-preview" className={`${getResumeStyle()} rounded-lg p-4 text-xs space-y-3 max-h-[800px] overflow-y-auto`}>
                     {/* Header */}
-                    <div className="text-center border-b border-gray-200 pb-4">
-                      <h1 className="text-xl font-bold text-gray-900">
+                    <div className="text-center border-b border-gray-200 pb-3">
+                      <h1 className="text-lg font-bold text-gray-900">
                         {personalInfo.firstName || 'First'} {personalInfo.lastName || 'Last'}
                       </h1>
-                      <div className="mt-2 space-y-1 text-gray-600">
+                      <div className="mt-1 space-y-0.5 text-gray-600">
                         {personalInfo.email && (
                           <div className="flex items-center justify-center space-x-1">
-                            <Mail className="w-3 h-3" />
+                            <Mail className="w-2.5 h-2.5" />
                             <span className="text-xs">{personalInfo.email}</span>
                           </div>
                         )}
                         {personalInfo.phone && (
                           <div className="flex items-center justify-center space-x-1">
-                            <Phone className="w-3 h-3" />
+                            <Phone className="w-2.5 h-2.5" />
                             <span className="text-xs">{personalInfo.phone}</span>
                           </div>
                         )}
                         {personalInfo.location && (
                           <div className="flex items-center justify-center space-x-1">
-                            <MapPin className="w-3 h-3" />
+                            <MapPin className="w-2.5 h-2.5" />
                             <span className="text-xs">{personalInfo.location}</span>
                           </div>
                         )}
                         {personalInfo.website && (
                           <div className="flex items-center justify-center space-x-1">
-                            <Globe className="w-3 h-3" />
+                            <Globe className="w-2.5 h-2.5" />
                             <span className="text-xs">{personalInfo.website}</span>
                           </div>
                         )}
@@ -759,7 +1170,7 @@ const ResumeBuilder = () => {
                     {/* Summary */}
                     {personalInfo.summary && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-2">Professional Summary</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Professional Summary</h2>
                         <p className="text-xs text-gray-700 leading-relaxed">{personalInfo.summary}</p>
                       </div>
                     )}
@@ -767,15 +1178,32 @@ const ResumeBuilder = () => {
                     {/* Experience */}
                     {experience.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-2">Experience</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Experience</h2>
                         {experience.map((exp) => (
-                          <div key={exp.id} className="mb-3">
-                            <div className="flex justify-between items-start mb-1">
+                          <div key={exp.id} className="mb-2">
+                            <div className="flex justify-between items-start mb-0.5">
                               <h3 className="font-medium text-gray-900 text-xs">{exp.title || 'Job Title'}</h3>
                               <span className="text-xs text-gray-500">{exp.startDate} - {exp.endDate}</span>
                             </div>
-                            <p className="text-xs text-gray-600 mb-1">{exp.company || 'Company'} • {exp.location}</p>
+                            <p className="text-xs text-gray-600 mb-0.5">{exp.company || 'Company'} • {exp.location}</p>
                             <p className="text-xs text-gray-700 leading-relaxed">{exp.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Projects */}
+                    {projects.length > 0 && (
+                      <div>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Projects</h2>
+                        {projects.map((proj) => (
+                          <div key={proj.id} className="mb-2">
+                            <div className="flex justify-between items-start mb-0.5">
+                              <h3 className="font-medium text-gray-900 text-xs">{proj.title || 'Project Title'}</h3>
+                              <span className="text-xs text-gray-500">{proj.startDate} - {proj.endDate}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 mb-0.5">{proj.technologies}</p>
+                            <p className="text-xs text-gray-700 leading-relaxed">{proj.description}</p>
                           </div>
                         ))}
                       </div>
@@ -784,9 +1212,9 @@ const ResumeBuilder = () => {
                     {/* Education */}
                     {education.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-2">Education</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Education</h2>
                         {education.map((edu) => (
-                          <div key={edu.id} className="mb-2">
+                          <div key={edu.id} className="mb-1">
                             <h3 className="font-medium text-gray-900 text-xs">{edu.degree || 'Degree'}</h3>
                             <p className="text-xs text-gray-600">{edu.school || 'School'} • {edu.location}</p>
                             <p className="text-xs text-gray-500">{edu.startDate} - {edu.endDate}</p>
@@ -796,13 +1224,44 @@ const ResumeBuilder = () => {
                       </div>
                     )}
 
+                    {/* Activities */}
+                    {activities.length > 0 && (
+                      <div>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Activities</h2>
+                        {activities.map((act) => (
+                          <div key={act.id} className="mb-2">
+                            <div className="flex justify-between items-start mb-0.5">
+                              <h3 className="font-medium text-gray-900 text-xs">{act.title || 'Activity'}</h3>
+                              <span className="text-xs text-gray-500">{act.startDate} - {act.endDate}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 mb-0.5">{act.organization} • {act.role}</p>
+                            <p className="text-xs text-gray-700 leading-relaxed">{act.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* References */}
+                    {references.length > 0 && (
+                      <div>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">References</h2>
+                        {references.map((ref) => (
+                          <div key={ref.id} className="mb-1">
+                            <h3 className="font-medium text-gray-900 text-xs">{ref.name || 'Reference Name'}</h3>
+                            <p className="text-xs text-gray-600">{ref.title} • {ref.company}</p>
+                            <p className="text-xs text-gray-500">{ref.email} • {ref.phone}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Skills */}
                     {skills.length > 0 && (
                       <div>
-                        <h2 className="font-semibold text-gray-900 mb-2">Skills</h2>
+                        <h2 className="font-semibold text-gray-900 mb-1 text-sm">Skills</h2>
                         <div className="flex flex-wrap gap-1">
                           {skills.map((skill, index) => (
-                            <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                            <span key={index} className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
                               {skill}
                             </span>
                           ))}

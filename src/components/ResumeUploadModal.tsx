@@ -18,11 +18,30 @@ interface ResumeUploadModalProps {
   onClose: () => void;
 }
 
+interface AnalysisResult {
+  atsScore: number;
+  overallScore: number;
+  sections: {
+    formatting: number;
+    keywords: number;
+    experience: number;
+    skills: number;
+  };
+  suggestions: string[];
+  detectedSections: {
+    hasContactInfo: boolean;
+    hasSummary: boolean;
+    hasExperience: boolean;
+    hasEducation: boolean;
+    hasSkills: boolean;
+  };
+}
+
 const ResumeUploadModal = ({ isOpen, onClose }: ResumeUploadModalProps) => {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -58,7 +77,7 @@ const ResumeUploadModal = ({ isOpen, onClose }: ResumeUploadModalProps) => {
   const analyzeResume = async () => {
     // Simulate AI analysis of uploaded resume
     setTimeout(() => {
-      const mockAnalysis = {
+      const mockAnalysis: AnalysisResult = {
         atsScore: Math.floor(Math.random() * 30) + 60, // 60-90
         overallScore: Math.floor(Math.random() * 25) + 70, // 70-95
         sections: {
@@ -183,7 +202,7 @@ const ResumeUploadModal = ({ isOpen, onClose }: ResumeUploadModalProps) => {
                     <div key={section} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <span className="font-medium capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
                       <div className="flex items-center space-x-2">
-                        <Progress value={score as number} className="w-20 h-2" />
+                        <Progress value={score} className="w-20 h-2" />
                         <span className="text-sm font-medium">{score}%</span>
                       </div>
                     </div>
