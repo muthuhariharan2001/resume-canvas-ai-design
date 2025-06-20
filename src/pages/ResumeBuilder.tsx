@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Navigation from '@/components/Navigation';
 import AIFeedbackModal from '@/components/AIFeedbackModal';
+import ResumeUploadModal from '@/components/ResumeUploadModal';
 import { 
   Plus, 
   Trash2, 
@@ -17,11 +17,7 @@ import {
   Eye, 
   Save,
   Sparkles,
-  User,
-  Briefcase,
-  GraduationCap,
-  Award,
-  Star,
+  Upload,
   Mail,
   Phone,
   MapPin,
@@ -30,6 +26,8 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ExperienceItem {
   id: number;
@@ -54,6 +52,9 @@ interface EducationItem {
 const ResumeBuilder = () => {
   const { user } = useAuth();
   const [showAIModal, setShowAIModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [resumeTemplate, setResumeTemplate] = useState('professional');
+  const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
   
   const [personalInfo, setPersonalInfo] = useState({
     firstName: '',
@@ -73,6 +74,7 @@ const ResumeBuilder = () => {
   useEffect(() => {
     if (user) {
       loadUserProfile();
+      loadUserResume();
     }
   }, [user]);
 
@@ -82,7 +84,7 @@ const ResumeBuilder = () => {
         .from('profiles')
         .select('*')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         setPersonalInfo(prev => ({
@@ -97,6 +99,36 @@ const ResumeBuilder = () => {
       }
     } catch (error) {
       console.error('Error loading profile:', error);
+    }
+  };
+
+  const loadUserResume = async () => {
+    try {
+      const { data: resume } = await supabase
+        .from('resumes')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (resume) {
+        setCurrentResumeId(resume.id);
+        if (resume.personal_info) {
+          setPersonalInfo(resume.personal_info as any);
+        }
+        if (resume.experience) {
+          setExperience(resume.experience as ExperienceItem[]);
+        }
+        if (resume.education) {
+          setEducation(resume.education as EducationItem[]);
+        }
+        if (resume.skills) {
+          setSkills(resume.skills);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading resume:', error);
     }
   };
 
@@ -167,11 +199,16 @@ const ResumeBuilder = () => {
       return;
     }
 
-    // Simulate AI generation
+    // Enhanced AI summary generation based on user data
+    const yearsOfExperience = experience.length;
+    const topSkills = skills.slice(0, 3).join(', ');
+    const latestRole = experience[0]?.title || 'professional';
+    const industries = [...new Set(experience.map(exp => exp.company))].slice(0, 2);
+
     const aiSummaries = [
-      `Experienced ${experience[0]?.title || 'professional'} with ${experience.length}+ years of expertise in ${skills.slice(0, 3).join(', ')}. Proven track record of delivering high-quality results and driving innovation in fast-paced environments.`,
-      `Results-driven ${experience[0]?.title || 'professional'} specializing in ${skills.slice(0, 2).join(' and ')}. Strong background in ${experience[0]?.company || 'leading organizations'} with a passion for excellence and continuous improvement.`,
-      `Dynamic ${experience[0]?.title || 'professional'} with comprehensive experience in ${skills.slice(0, 3).join(', ')}. Demonstrated ability to lead projects, collaborate effectively, and deliver exceptional outcomes.`
+      `Results-driven ${latestRole} with ${yearsOfExperience}+ years of progressive experience in ${topSkills}. Proven track record of delivering high-impact solutions and driving operational excellence across ${industries.join(' and ')}. Expertise in leading cross-functional teams and implementing innovative strategies that enhance productivity and business growth.`,
+      `Dynamic ${latestRole} specializing in ${topSkills} with comprehensive experience spanning ${yearsOfExperience} years. Demonstrated ability to architect scalable systems, optimize processes, and deliver exceptional results in fast-paced environments. Strong background in ${industries[0] || 'technology'} with a passion for continuous learning and innovation.`,
+      `Accomplished ${latestRole} with ${yearsOfExperience}+ years of expertise in ${topSkills}. Proven ability to drive strategic initiatives, mentor high-performing teams, and deliver measurable business impact. Experience across ${industries.join(', ')} with a focus on excellence, collaboration, and sustainable growth.`
     ];
 
     const randomSummary = aiSummaries[Math.floor(Math.random() * aiSummaries.length)];
@@ -179,7 +216,7 @@ const ResumeBuilder = () => {
     
     toast({
       title: "AI Summary Generated!",
-      description: "Your professional summary has been created using AI.",
+      description: "Your professional summary has been created using AI based on your experience.",
     });
   };
 
@@ -188,18 +225,32 @@ const ResumeBuilder = () => {
       const resumeData = {
         user_id: user?.id,
         title: `${personalInfo.firstName} ${personalInfo.lastName}'s Resume`,
-        personal_info: personalInfo,
-        experience: experience,
-        education: education,
+        personal_info: personalInfo as any,
+        experience: experience as any,
+        education: education as any,
         skills: skills,
         summary: personalInfo.summary
       };
 
-      const { error } = await supabase
-        .from('resumes')
-        .upsert(resumeData);
+      let result;
+      if (currentResumeId) {
+        result = await supabase
+          .from('resumes')
+          .update(resumeData)
+          .eq('id', currentResumeId);
+      } else {
+        result = await supabase
+          .from('resumes')
+          .insert(resumeData)
+          .select()
+          .single();
+        
+        if (result.data) {
+          setCurrentResumeId(result.data.id);
+        }
+      }
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       toast({
         title: "Resume Saved",
@@ -215,89 +266,105 @@ const ResumeBuilder = () => {
     }
   };
 
-  const handleDownload = () => {
-    // Create a simple HTML version of the resume
-    const resumeHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${personalInfo.firstName} ${personalInfo.lastName} - Resume</title>
-        <style>
-          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; }
-          .section { margin: 20px 0; }
-          .section h2 { color: #333; border-bottom: 1px solid #ccc; }
-          .experience, .education { margin-bottom: 15px; }
-          .skills { display: flex; flex-wrap: wrap; gap: 10px; }
-          .skill { background: #f0f0f0; padding: 5px 10px; border-radius: 5px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${personalInfo.firstName} ${personalInfo.lastName}</h1>
-          <p>${personalInfo.email} | ${personalInfo.phone} | ${personalInfo.location}</p>
-          ${personalInfo.website ? `<p>${personalInfo.website}</p>` : ''}
-        </div>
-        
-        ${personalInfo.summary ? `
-        <div class="section">
-          <h2>Professional Summary</h2>
-          <p>${personalInfo.summary}</p>
-        </div>
-        ` : ''}
-        
-        ${experience.length > 0 ? `
-        <div class="section">
-          <h2>Experience</h2>
-          ${experience.map(exp => `
-            <div class="experience">
-              <h3>${exp.title} - ${exp.company}</h3>
-              <p><em>${exp.location} | ${exp.startDate} - ${exp.endDate}</em></p>
-              <p>${exp.description}</p>
-            </div>
-          `).join('')}
-        </div>
-        ` : ''}
-        
-        ${education.length > 0 ? `
-        <div class="section">
-          <h2>Education</h2>
-          ${education.map(edu => `
-            <div class="education">
-              <h3>${edu.degree}</h3>
-              <p><em>${edu.school}, ${edu.location} | ${edu.startDate} - ${edu.endDate}</em></p>
-              ${edu.gpa ? `<p>GPA: ${edu.gpa}</p>` : ''}
-            </div>
-          `).join('')}
-        </div>
-        ` : ''}
-        
-        ${skills.length > 0 ? `
-        <div class="section">
-          <h2>Skills</h2>
-          <div class="skills">
-            ${skills.map(skill => `<span class="skill">${skill}</span>`).join('')}
-          </div>
-        </div>
-        ` : ''}
-      </body>
-      </html>
-    `;
+  const handleDownloadPDF = async () => {
+    try {
+      const element = document.getElementById('resume-preview');
+      if (!element) {
+        toast({
+          title: "Error",
+          description: "Resume preview not found.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const blob = new Blob([resumeHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${personalInfo.firstName}_${personalInfo.lastName}_Resume.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`${personalInfo.firstName}_${personalInfo.lastName}_Resume.pdf`);
+
+      // Track download
+      if (currentResumeId) {
+        await supabase.rpc('increment_resume_downloads', { resume_id: currentResumeId });
+      }
+
+      toast({
+        title: "Resume Downloaded",
+        description: "Your resume has been downloaded as a PDF file.",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading your resume.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const applyAISuggestions = (suggestions: any) => {
+    // Apply AI suggestions to the resume
+    if (suggestions.summary) {
+      setPersonalInfo(prev => ({ ...prev, summary: suggestions.summary }));
+    }
+    
+    if (suggestions.skills) {
+      const newSkills = suggestions.skills.filter((skill: string) => !skills.includes(skill));
+      setSkills(prev => [...prev, ...newSkills]);
+    }
+
+    if (suggestions.experience) {
+      setExperience(prev => prev.map((exp, index) => {
+        if (suggestions.experience[index]) {
+          return { ...exp, description: suggestions.experience[index].description };
+        }
+        return exp;
+      }));
+    }
 
     toast({
-      title: "Resume Downloaded",
-      description: "Your resume has been downloaded as an HTML file.",
+      title: "AI Suggestions Applied",
+      description: "Your resume has been updated with AI recommendations.",
     });
+  };
+
+  const getResumeStyle = () => {
+    switch (resumeTemplate) {
+      case 'faang':
+        return 'bg-white border-l-4 border-blue-600 shadow-lg';
+      case 'executive':
+        return 'bg-gradient-to-r from-gray-50 to-white border border-gray-300 shadow-xl';
+      case 'creative':
+        return 'bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 shadow-lg';
+      default:
+        return 'bg-white border border-gray-200 shadow-md';
+    }
   };
 
   return (
@@ -314,17 +381,17 @@ const ResumeBuilder = () => {
                 <p className="mt-2 text-gray-600">Create and customize your professional resume</p>
               </div>
               <div className="mt-4 sm:mt-0 flex items-center space-x-4">
+                <Button variant="outline" onClick={() => setShowUploadModal(true)} className="hover-lift">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Resume
+                </Button>
                 <Button variant="outline" onClick={handleSave} className="hover-lift">
                   <Save className="w-4 h-4 mr-2" />
                   Save
                 </Button>
-                <Button variant="outline" className="hover-lift">
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </Button>
-                <Button onClick={handleDownload} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover-lift">
+                <Button onClick={handleDownloadPDF} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover-lift">
                   <Download className="w-4 h-4 mr-2" />
-                  Download
+                  Download PDF
                 </Button>
               </div>
             </div>
@@ -336,15 +403,28 @@ const ResumeBuilder = () => {
               <Card className="border-0 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Edit Resume</CardTitle>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setShowAIModal(true)}
-                    className="bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200"
-                  >
-                    <Sparkles className="w-4 h-4 mr-2 text-blue-600" />
-                    AI Feedback
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <Select value={resumeTemplate} onValueChange={setResumeTemplate}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="faang">FAANG</SelectItem>
+                        <SelectItem value="executive">Executive</SelectItem>
+                        <SelectItem value="creative">Creative</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowAIModal(true)}
+                      className="bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2 text-blue-600" />
+                      AI Feedback
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="personal" className="space-y-6">
@@ -642,7 +722,7 @@ const ResumeBuilder = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-white border border-gray-200 rounded-lg p-6 text-sm space-y-4">
+                  <div id="resume-preview" className={`${getResumeStyle()} rounded-lg p-6 text-sm space-y-4`}>
                     {/* Header */}
                     <div className="text-center border-b border-gray-200 pb-4">
                       <h1 className="text-xl font-bold text-gray-900">
@@ -739,7 +819,14 @@ const ResumeBuilder = () => {
 
       <AIFeedbackModal 
         isOpen={showAIModal} 
-        onClose={() => setShowAIModal(false)} 
+        onClose={() => setShowAIModal(false)}
+        resumeData={{ personalInfo, experience, education, skills }}
+        onApplySuggestions={applyAISuggestions}
+      />
+
+      <ResumeUploadModal 
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
       />
     </div>
   );
