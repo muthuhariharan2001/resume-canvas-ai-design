@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -175,8 +176,8 @@ const ResumeBuilder = () => {
         if (resume.activities) {
           setActivities(resume.activities as unknown as ActivityItem[]);
         }
-        if (resume.references) {
-          setReferences(resume.references as unknown as ReferenceItem[]);
+        if (resume.resume_references) {
+          setReferences(resume.resume_references as unknown as ReferenceItem[]);
         }
         if (resume.skills) {
           setSkills(resume.skills as string[]);
@@ -482,7 +483,7 @@ const ResumeBuilder = () => {
         education: education as any,
         projects: projects as any,
         activities: activities as any,
-        references: references as any,
+        resume_references: references as any,
         skills: skills,
         summary: personalInfo.summary
       };

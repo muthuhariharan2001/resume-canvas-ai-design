@@ -47,12 +47,15 @@ export type Database = {
       }
       resumes: {
         Row: {
+          activities: Json | null
           created_at: string
           downloads: number | null
           education: Json | null
           experience: Json | null
           id: string
           personal_info: Json | null
+          projects: Json | null
+          resume_references: Json | null
           skills: string[] | null
           summary: string | null
           title: string
@@ -61,12 +64,15 @@ export type Database = {
           views: number | null
         }
         Insert: {
+          activities?: Json | null
           created_at?: string
           downloads?: number | null
           education?: Json | null
           experience?: Json | null
           id?: string
           personal_info?: Json | null
+          projects?: Json | null
+          resume_references?: Json | null
           skills?: string[] | null
           summary?: string | null
           title?: string
@@ -75,12 +81,15 @@ export type Database = {
           views?: number | null
         }
         Update: {
+          activities?: Json | null
           created_at?: string
           downloads?: number | null
           education?: Json | null
           experience?: Json | null
           id?: string
           personal_info?: Json | null
+          projects?: Json | null
+          resume_references?: Json | null
           skills?: string[] | null
           summary?: string | null
           title?: string
