@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -82,6 +81,84 @@ interface ReferenceItem {
   relationship: string;
 }
 
+// Sample data object
+const getSampleData = () => ({
+  personalInfo: {
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@email.com',
+    phone: '+1 (555) 123-4567',
+    location: 'New York, NY',
+    website: 'linkedin.com/in/johndoe',
+    summary: 'Results-driven software engineer with 5+ years of experience in full-stack development. Proven track record of delivering scalable web applications and leading cross-functional teams. Expertise in React, Node.js, and cloud technologies with a passion for creating efficient solutions that drive business growth.'
+  },
+  experience: [
+    {
+      id: 1,
+      title: 'Senior Software Engineer',
+      company: 'Tech Solutions Inc.',
+      location: 'San Francisco, CA',
+      startDate: '2020-01',
+      endDate: 'Present',
+      description: '• Led development of microservices architecture serving 100K+ users\n• Reduced system response time by 40% through database optimization\n• Mentored 5 junior developers and established code review processes\n• Implemented CI/CD pipelines reducing deployment time by 60%'
+    },
+    {
+      id: 2,
+      title: 'Full Stack Developer',
+      company: 'StartupXYZ',
+      location: 'Austin, TX',
+      startDate: '2018-06',
+      endDate: '2019-12',
+      description: '• Built responsive web applications using React and Node.js\n• Collaborated with design team to implement pixel-perfect UI components\n• Integrated third-party APIs and payment processing systems\n• Achieved 98% uptime for production applications'
+    }
+  ],
+  education: [
+    {
+      id: 1,
+      degree: 'Bachelor of Science in Computer Science',
+      school: 'University of California, Berkeley',
+      location: 'Berkeley, CA',
+      startDate: '2014-08',
+      endDate: '2018-05',
+      gpa: '3.8'
+    }
+  ],
+  projects: [
+    {
+      id: 1,
+      title: 'E-commerce Platform',
+      description: '• Developed full-stack e-commerce platform with React and Express.js\n• Implemented secure payment processing and inventory management\n• Deployed on AWS with auto-scaling capabilities',
+      technologies: 'React, Node.js, MongoDB, AWS',
+      startDate: '2023-01',
+      endDate: '2023-06',
+      link: 'https://github.com/johndoe/ecommerce'
+    }
+  ],
+  activities: [
+    {
+      id: 1,
+      title: 'Code for Community',
+      organization: 'Local Tech Meetup',
+      role: 'Volunteer Developer',
+      startDate: '2022-01',
+      endDate: 'Present',
+      description: '• Organized coding workshops for underserved communities\n• Mentored 20+ junior developers in web development\n• Built educational platforms serving 500+ students'
+    }
+  ],
+  references: [
+    {
+      id: 1,
+      name: 'Sarah Johnson',
+      title: 'Engineering Manager',
+      company: 'Tech Solutions Inc.',
+      email: 'sarah.johnson@techsolutions.com',
+      phone: '+1 (555) 987-6543',
+      relationship: 'Former Manager'
+    }
+  ],
+  skills: ['JavaScript', 'React', 'Node.js', 'Python', 'AWS', 'Docker', 'MongoDB', 'PostgreSQL', 'Git', 'Agile']
+});
+
 const ResumeBuilder = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -90,35 +167,31 @@ const ResumeBuilder = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [resumeTemplate, setResumeTemplate] = useState('professional');
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  const [personalInfo, setPersonalInfo] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    location: '',
-    website: '',
-    summary: ''
-  });
-
-  const [experience, setExperience] = useState<ExperienceItem[]>([]);
-  const [education, setEducation] = useState<EducationItem[]>([]);
-  const [projects, setProjects] = useState<ProjectItem[]>([]);
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [references, setReferences] = useState<ReferenceItem[]>([]);
-  const [skills, setSkills] = useState<string[]>([]);
+  const sampleData = getSampleData();
+  
+  // Initialize with sample data
+  const [personalInfo, setPersonalInfo] = useState(sampleData.personalInfo);
+  const [experience, setExperience] = useState<ExperienceItem[]>(sampleData.experience);
+  const [education, setEducation] = useState<EducationItem[]>(sampleData.education);
+  const [projects, setProjects] = useState<ProjectItem[]>(sampleData.projects);
+  const [activities, setActivities] = useState<ActivityItem[]>(sampleData.activities);
+  const [references, setReferences] = useState<ReferenceItem[]>(sampleData.references);
+  const [skills, setSkills] = useState<string[]>(sampleData.skills);
   const [newSkill, setNewSkill] = useState('');
 
   useEffect(() => {
-    if (user) {
+    if (user && !isInitialized) {
       loadUserProfile();
       const resumeId = searchParams.get('id');
       if (resumeId) {
         loadUserResume(resumeId);
         setCurrentResumeId(resumeId);
       }
+      setIsInitialized(true);
     }
-  }, [user, searchParams]);
+  }, [user, searchParams, isInitialized]);
 
   const loadUserProfile = async () => {
     try {
@@ -131,12 +204,12 @@ const ResumeBuilder = () => {
       if (profile) {
         setPersonalInfo(prev => ({
           ...prev,
-          firstName: profile.first_name || '',
-          lastName: profile.last_name || '',
-          email: profile.email || '',
-          phone: profile.phone || '',
-          location: profile.location || '',
-          website: profile.website || ''
+          firstName: profile.first_name || prev.firstName,
+          lastName: profile.last_name || prev.lastName,
+          email: profile.email || prev.email,
+          phone: profile.phone || prev.phone,
+          location: profile.location || prev.location,
+          website: profile.website || prev.website
         }));
       }
     } catch (error) {
@@ -732,6 +805,44 @@ const ResumeBuilder = () => {
       default:
         return 'bg-white border border-gray-200 shadow-md';
     }
+  };
+
+  const getTemplateHeaderStyle = () => {
+    switch (resumeTemplate) {
+      case 'faang':
+        return 'text-center border-b-2 border-blue-600 pb-1.5';
+      case 'executive':
+        return 'text-left bg-gray-800 text-white p-2 -m-4 mb-2';
+      case 'creative':
+        return 'text-center bg-gradient-to-r from-purple-600 to-pink-600 text-white p-2 -m-4 mb-2 rounded-t-lg';
+      default:
+        return 'text-center border-b border-gray-200 pb-1.5';
+    }
+  };
+
+  const getTemplateSectionStyle = () => {
+    switch (resumeTemplate) {
+      case 'faang':
+        return 'font-semibold text-blue-900 mb-0.5 text-[9px] border-b border-blue-300 pb-0.5';
+      case 'executive':
+        return 'font-semibold text-gray-800 mb-0.5 text-[9px] bg-gray-100 px-1 py-0.5';
+      case 'creative':
+        return 'font-semibold text-purple-800 mb-0.5 text-[9px] border-b border-purple-300 pb-0.5';
+      default:
+        return 'font-semibold text-gray-900 mb-0.5 text-[9px]';
+    }
+  };
+
+  const getDisplayData = () => {
+    return {
+      personalInfo: personalInfo.firstName ? personalInfo : sampleData.personalInfo,
+      experience: experience.length > 0 ? experience : sampleData.experience,
+      education: education.length > 0 ? education : sampleData.education,
+      projects: projects.length > 0 ? projects : sampleData.projects,
+      activities: activities.length > 0 ? activities : sampleData.activities,
+      references: references.length > 0 ? references : sampleData.references,
+      skills: skills.length > 0 ? skills : sampleData.skills
+    };
   };
 
   return (
@@ -1365,79 +1476,70 @@ const ResumeBuilder = () => {
               </Card>
             </div>
 
-            {/* Compact Preview Panel */}
+            {/* Enhanced Live Preview Panel with Template Styles */}
             <div className="lg:col-span-1">
               <Card className="border-0 shadow-lg sticky top-24">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Eye className="w-5 h-5" />
-                    <span>Live Preview</span>
+                    <span>Live Preview - {resumeTemplate.charAt(0).toUpperCase() + resumeTemplate.slice(1)}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div id="resume-preview" className={`${getResumeStyle()} rounded-lg p-4 text-[9px] space-y-1.5 max-h-[800px] overflow-y-auto leading-tight`}>
-                    {/* Compact Header */}
-                    <div className="text-center border-b border-gray-200 pb-1.5">
-                      <h1 className="text-[11px] font-bold text-gray-900 mb-0.5">
-                        {personalInfo.firstName || 'First'} {personalInfo.lastName || 'Last'}
+                    {/* Dynamic Header based on template */}
+                    <div className={getTemplateHeaderStyle()}>
+                      <h1 className="text-[11px] font-bold mb-0.5">
+                        {getDisplayData().personalInfo.firstName} {getDisplayData().personalInfo.lastName}
                       </h1>
-                      <div className="flex justify-center space-x-3 text-[7px] text-gray-600">
-                        {personalInfo.email && (
-                          <div className="flex items-center space-x-0.5">
-                            <Mail className="w-2 h-2" />
-                            <span>{personalInfo.email}</span>
-                          </div>
-                        )}
-                        {personalInfo.phone && (
-                          <div className="flex items-center space-x-0.5">
-                            <Phone className="w-2 h-2" />
-                            <span>{personalInfo.phone}</span>
-                          </div>
-                        )}
-                        {personalInfo.location && (
-                          <div className="flex items-center space-x-0.5">
-                            <MapPin className="w-2 h-2" />
-                            <span>{personalInfo.location}</span>
-                          </div>
-                        )}
-                      </div>
-                      {personalInfo.website && (
-                        <div className="flex items-center justify-center space-x-0.5 text-[7px] text-gray-600 mt-0.5">
-                          <Globe className="w-2 h-2" />
-                          <span>{personalInfo.website}</span>
+                      <div className="flex justify-center space-x-3 text-[7px] opacity-90">
+                        <div className="flex items-center space-x-0.5">
+                          <Mail className="w-2 h-2" />
+                          <span>{getDisplayData().personalInfo.email}</span>
                         </div>
-                      )}
+                        <div className="flex items-center space-x-0.5">
+                          <Phone className="w-2 h-2" />
+                          <span>{getDisplayData().personalInfo.phone}</span>
+                        </div>
+                        <div className="flex items-center space-x-0.5">
+                          <MapPin className="w-2 h-2" />
+                          <span>{getDisplayData().personalInfo.location}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center space-x-0.5 text-[7px] opacity-90 mt-0.5">
+                        <Globe className="w-2 h-2" />
+                        <span>{getDisplayData().personalInfo.website}</span>
+                      </div>
                     </div>
 
-                    {/* Compact Summary */}
-                    {personalInfo.summary && (
-                      <div>
-                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">SUMMARY</h2>
-                        <p className="text-[7px] text-gray-700 leading-tight">{personalInfo.summary}</p>
-                      </div>
-                    )}
+                    {/* Summary */}
+                    <div>
+                      <h2 className={getTemplateSectionStyle()}>SUMMARY</h2>
+                      <p className="text-[7px] text-gray-700 leading-tight">{getDisplayData().personalInfo.summary}</p>
+                    </div>
 
-                    {/* Show sample data if no real data */}
-                    {experience.length === 0 && (
-                      <div className="mb-2">
-                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[7px]">EXPERIENCE</h2>
-                        <div className="text-[6px] text-gray-500 italic">
-                          Add your work experience to see it here
+                    {/* Experience */}
+                    <div className="mb-2">
+                      <h2 className={getTemplateSectionStyle()}>EXPERIENCE</h2>
+                      {getDisplayData().experience.slice(0, 2).map((exp) => (
+                        <div key={exp.id} className="mb-1">
+                          <h3 className="font-medium text-gray-900 text-[6px]">{exp.title}</h3>
+                          <p className="text-[5px] text-gray-600">{exp.company} • {exp.startDate} - {exp.endDate}</p>
                         </div>
-                      </div>
-                    )}
+                      ))}
+                    </div>
 
-                    {experience.length > 0 && (
-                      <div className="mb-2">
-                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[7px]">EXPERIENCE</h2>
-                        {experience.slice(0, 2).map((exp) => (
-                          <div key={exp.id} className="mb-1">
-                            <h3 className="font-medium text-gray-900 text-[6px]">{exp.title}</h3>
-                            <p className="text-[5px] text-gray-600">{exp.company}</p>
-                          </div>
+                    {/* Skills */}
+                    <div>
+                      <h2 className={getTemplateSectionStyle()}>SKILLS</h2>
+                      <div className="flex flex-wrap gap-1">
+                        {getDisplayData().skills.slice(0, 8).map((skill, index) => (
+                          <span key={index} className="bg-gray-100 text-gray-700 px-1 py-0.5 rounded text-[5px]">
+                            {skill}
+                          </span>
                         ))}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1450,7 +1552,7 @@ const ResumeBuilder = () => {
       <AIFeedbackModal 
         isOpen={showAIModal} 
         onClose={() => setShowAIModal(false)}
-        resumeData={{ personalInfo, experience, education, skills }}
+        resumeData={getDisplayData()}
         onApplySuggestions={applyAISuggestions}
       />
 
@@ -1462,7 +1564,7 @@ const ResumeBuilder = () => {
       <ResumePreviewModal
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
-        resumeData={{ personalInfo, experience, education, projects, skills }}
+        resumeData={getDisplayData()}
         onDownload={handleDownloadPDF}
       />
     </div>
