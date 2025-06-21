@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Navigation from '@/components/Navigation';
 import AIFeedbackModal from '@/components/AIFeedbackModal';
 import ResumeUploadModal from '@/components/ResumeUploadModal';
+import ResumePreviewModal from '@/components/ResumePreviewModal';
 import { 
   Plus, 
   Trash2, 
@@ -81,8 +83,10 @@ interface ReferenceItem {
 
 const ResumeBuilder = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [showAIModal, setShowAIModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [resumeTemplate, setResumeTemplate] = useState('professional');
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
   
@@ -107,9 +111,13 @@ const ResumeBuilder = () => {
   useEffect(() => {
     if (user) {
       loadUserProfile();
-      loadUserResume();
+      const resumeId = searchParams.get('id');
+      if (resumeId) {
+        loadUserResume(resumeId);
+        setCurrentResumeId(resumeId);
+      }
     }
-  }, [user]);
+  }, [user, searchParams]);
 
   const loadUserProfile = async () => {
     try {
@@ -135,15 +143,20 @@ const ResumeBuilder = () => {
     }
   };
 
-  const loadUserResume = async () => {
+  const loadUserResume = async (resumeId?: string) => {
     try {
-      const { data: resume } = await supabase
+      let query = supabase
         .from('resumes')
         .select('*')
-        .eq('user_id', user?.id)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('user_id', user?.id);
+
+      if (resumeId) {
+        query = query.eq('id', resumeId);
+      } else {
+        query = query.order('updated_at', { ascending: false }).limit(1);
+      }
+
+      const { data: resume } = await query.maybeSingle();
 
       if (resume) {
         setCurrentResumeId(resume.id);
@@ -155,6 +168,15 @@ const ResumeBuilder = () => {
         }
         if (resume.education) {
           setEducation(resume.education as unknown as EducationItem[]);
+        }
+        if (resume.projects) {
+          setProjects(resume.projects as unknown as ProjectItem[]);
+        }
+        if (resume.activities) {
+          setActivities(resume.activities as unknown as ActivityItem[]);
+        }
+        if (resume.references) {
+          setReferences(resume.references as unknown as ReferenceItem[]);
         }
         if (resume.skills) {
           setSkills(resume.skills as string[]);
@@ -297,7 +319,7 @@ const ResumeBuilder = () => {
     setSkills(prev => prev.filter(skill => skill !== skillToRemove));
   };
 
-  // Enhanced AI Generation functions
+  // Enhanced AI Generation functions with better prompts
   const generateAISummary = async () => {
     if (!personalInfo.firstName || experience.length === 0) {
       toast({
@@ -308,23 +330,25 @@ const ResumeBuilder = () => {
       return;
     }
 
-    const yearsOfExperience = experience.length;
-    const topSkills = skills.slice(0, 3).join(', ');
+    const yearsOfExperience = Math.max(1, experience.length);
+    const topSkills = skills.slice(0, 5).join(', ') || 'various technologies';
     const latestRole = experience[0]?.title || 'professional';
     const industries = [...new Set(experience.map(exp => exp.company))].slice(0, 2);
 
-    const aiSummaries = [
-      `Results-driven ${latestRole} with ${yearsOfExperience}+ years of progressive experience in ${topSkills}. Proven track record of delivering high-impact solutions and driving operational excellence across ${industries.join(' and ')}. Expertise in leading cross-functional teams and implementing innovative strategies that enhance productivity and business growth.`,
-      `Dynamic ${latestRole} specializing in ${topSkills} with comprehensive experience spanning ${yearsOfExperience} years. Demonstrated ability to architect scalable systems, optimize processes, and deliver exceptional results in fast-paced environments. Strong background in ${industries[0] || 'technology'} with a passion for continuous learning and innovation.`,
-      `Accomplished ${latestRole} with ${yearsOfExperience}+ years of expertise in ${topSkills}. Proven ability to drive strategic initiatives, mentor high-performing teams, and deliver measurable business impact. Experience across ${industries.join(', ')} with a focus on excellence, collaboration, and sustainable growth.`
+    const enhancedPrompts = [
+      `Results-driven ${latestRole} with ${yearsOfExperience}+ years of progressive experience in ${topSkills}. Demonstrated expertise in delivering high-impact solutions, optimizing system performance, and driving operational excellence. Proven track record of leading cross-functional teams and implementing innovative strategies that enhance productivity and accelerate business growth in competitive markets.`,
+      
+      `Accomplished ${latestRole} specializing in ${topSkills} with comprehensive experience spanning ${yearsOfExperience} years across dynamic environments. Expert in architecting scalable solutions, streamlining processes, and delivering exceptional results under tight deadlines. Strong analytical skills combined with leadership experience in ${industries[0] || 'technology'} sector, passionate about continuous innovation and team development.`,
+      
+      `Strategic ${latestRole} with ${yearsOfExperience}+ years of hands-on expertise in ${topSkills} and emerging technologies. Proven ability to drive digital transformation initiatives, mentor high-performing teams, and deliver measurable business impact. Experience across ${industries.join(' and ')} industries with focus on scalability, efficiency, and sustainable growth through innovative problem-solving approaches.`
     ];
 
-    const randomSummary = aiSummaries[Math.floor(Math.random() * aiSummaries.length)];
+    const randomSummary = enhancedPrompts[Math.floor(Math.random() * enhancedPrompts.length)];
     setPersonalInfo(prev => ({ ...prev, summary: randomSummary }));
     
     toast({
       title: "AI Summary Generated!",
-      description: "Your professional summary has been created using AI based on your experience.",
+      description: "Professional summary has been created with industry-specific keywords and achievements.",
     });
   };
 
@@ -339,29 +363,32 @@ const ResumeBuilder = () => {
       return;
     }
 
-    const aiDescriptions = [
-      `• Led cross-functional teams to deliver high-impact projects, resulting in 25% improvement in operational efficiency
-• Developed and implemented strategic initiatives that increased revenue by $2M annually
-• Collaborated with stakeholders to optimize processes and enhance customer satisfaction by 30%
-• Mentored junior team members and fostered a culture of continuous improvement`,
+    const enhancedDescriptions = [
+      `• Spearheaded cross-functional initiatives resulting in 35% improvement in operational efficiency and $2.5M annual cost savings
+• Architected and implemented scalable solutions serving 150K+ users with 99.9% uptime and sub-second response times
+• Led agile development teams of 8+ members, establishing best practices that increased delivery velocity by 45%
+• Collaborated with C-level executives and key stakeholders to define strategic roadmaps and technical vision
+• Mentored 12+ junior developers and implemented comprehensive code review processes reducing bug reports by 60%`,
       
-      `• Spearheaded innovative solutions that reduced operational costs by 20% while maintaining quality standards
-• Managed end-to-end project lifecycle for multiple concurrent initiatives worth $5M+
-• Built strong partnerships with key clients, resulting in 95% retention rate and 40% increase in contract renewals
-• Implemented data-driven strategies that improved decision-making processes across departments`,
+      `• Designed and deployed microservices architecture supporting 500K+ daily transactions with zero downtime
+• Optimized database performance and implemented caching strategies, reducing query response time by 70%
+• Established CI/CD pipelines and DevOps practices, decreasing deployment time from hours to minutes
+• Built strategic partnerships with enterprise clients, achieving 98% retention rate and 150% revenue growth
+• Conducted technical presentations to diverse audiences including board members and external investors`,
       
-      `• Architected scalable systems and processes that supported 300% business growth over 2 years
-• Led digital transformation initiatives that modernized legacy systems and improved user experience
-• Established performance metrics and KPIs that enhanced team productivity by 35%
-• Presented quarterly business reviews to C-level executives and key stakeholders`
+      `• Led digital transformation project modernizing legacy systems, resulting in 50% faster processing times
+• Implemented advanced analytics and monitoring solutions providing real-time insights for data-driven decisions
+• Managed end-to-end product lifecycle for multiple concurrent projects worth $8M+ in total value
+• Established quality assurance protocols and automated testing frameworks achieving 95% code coverage
+• Drove innovation initiatives including R&D projects that generated 3 patent applications and competitive advantages`
     ];
 
-    const randomDescription = aiDescriptions[Math.floor(Math.random() * aiDescriptions.length)];
+    const randomDescription = enhancedDescriptions[Math.floor(Math.random() * enhancedDescriptions.length)];
     updateExperience(expId, 'description', randomDescription);
     
     toast({
       title: "AI Description Generated!",
-      description: "Job description has been created with quantifiable achievements.",
+      description: "Professional experience description with quantified achievements and industry keywords.",
     });
   };
 
@@ -376,29 +403,32 @@ const ResumeBuilder = () => {
       return;
     }
 
-    const aiProjectDescriptions = [
-      `• Developed a full-stack application serving 10,000+ users with 99.9% uptime
-• Implemented responsive design and optimized performance, reducing load times by 40%
-• Integrated third-party APIs and payment systems, increasing user engagement by 65%
-• Built comprehensive testing suite with 95% code coverage`,
+    const enhancedProjectDescriptions = [
+      `• Developed enterprise-grade full-stack application serving 50K+ concurrent users with 99.95% uptime
+• Implemented responsive design principles and performance optimizations, achieving 40% faster load times
+• Integrated 15+ third-party APIs including payment gateways, analytics, and communication services
+• Built comprehensive testing suite with 95% code coverage including unit, integration, and E2E tests
+• Deployed using containerized architecture on AWS with auto-scaling and disaster recovery capabilities`,
       
-      `• Created scalable microservices architecture handling 1M+ requests per day
-• Designed and implemented RESTful APIs with proper authentication and authorization
-• Optimized database queries and implemented caching, improving response times by 50%
-• Collaborated with cross-functional teams using Agile methodologies`,
+      `• Architected cloud-native microservices handling 2M+ API requests daily with sub-100ms response times
+• Designed RESTful APIs with OAuth 2.0 authentication, rate limiting, and comprehensive error handling
+• Implemented real-time features using WebSocket connections and event-driven architecture patterns
+• Optimized database schema and queries resulting in 65% improvement in data retrieval performance
+• Established monitoring and alerting systems with detailed logging and performance metrics tracking`,
       
-      `• Built modern web application using latest technologies and best practices
-• Implemented real-time features using WebSocket connections and event-driven architecture
-• Designed intuitive user interface with focus on accessibility and user experience
-• Deployed application using CI/CD pipelines and cloud infrastructure`
+      `• Created innovative web application using cutting-edge technologies and modern development practices
+• Implemented advanced data visualization features and interactive dashboards for business intelligence
+• Built automated deployment pipeline with quality gates, security scanning, and performance testing
+• Designed scalable database architecture supporting complex queries and high-volume data processing
+• Collaborated with UX/UI team to deliver intuitive user experience with accessibility compliance (WCAG 2.1)`
     ];
 
-    const randomDescription = aiProjectDescriptions[Math.floor(Math.random() * aiProjectDescriptions.length)];
+    const randomDescription = enhancedProjectDescriptions[Math.floor(Math.random() * enhancedProjectDescriptions.length)];
     updateProject(projId, 'description', randomDescription);
     
     toast({
       title: "AI Project Description Generated!",
-      description: "Project description has been created with technical achievements.",
+      description: "Technical project description with specific metrics and modern technology stack.",
     });
   };
 
@@ -413,29 +443,32 @@ const ResumeBuilder = () => {
       return;
     }
 
-    const aiActivityDescriptions = [
-      `• Organized and led community outreach programs, impacting 500+ individuals
-• Coordinated fundraising events that raised $25,000+ for charitable causes
-• Managed team of 15+ volunteers and established effective communication protocols
-• Developed leadership skills through mentoring and team management responsibilities`,
+    const enhancedActivityDescriptions = [
+      `• Organized and executed large-scale community outreach programs impacting 1,200+ individuals annually
+• Secured $75,000+ in funding through grant writing and corporate sponsorship initiatives
+• Led cross-functional volunteer teams of 25+ members across multiple geographic locations
+• Developed comprehensive training programs increasing volunteer retention rate by 80%
+• Established strategic partnerships with 15+ local organizations expanding program reach and effectiveness`,
       
-      `• Planned and executed large-scale events with 200+ participants
-• Built strategic partnerships with local businesses and community organizations
-• Created marketing campaigns that increased event attendance by 80%
-• Demonstrated strong organizational and project management capabilities`,
+      `• Planned and coordinated signature events attracting 500+ participants and generating $50K+ in donations
+• Created integrated marketing campaigns across digital and traditional channels increasing attendance by 120%
+• Managed operational budgets exceeding $100K with zero cost overruns and detailed financial reporting
+• Implemented volunteer management systems and processes improving efficiency by 60%
+• Built lasting relationships with community leaders, government officials, and corporate partners`,
       
-      `• Led volunteer initiatives that provided essential services to underserved communities
-• Developed and implemented training programs for new volunteers
-• Collaborated with diverse stakeholders to achieve common objectives
-• Enhanced communication and interpersonal skills through community engagement`
+      `• Initiated and led innovative programs addressing critical community needs with measurable social impact
+• Developed educational workshops and training materials reaching 800+ beneficiaries over two years
+• Coordinated with municipal authorities and nonprofits to maximize resource allocation and program effectiveness
+• Created comprehensive documentation and best practices guide adopted by 8+ similar organizations
+• Demonstrated exceptional leadership and project management skills in fast-paced, resource-constrained environment`
     ];
 
-    const randomDescription = aiActivityDescriptions[Math.floor(Math.random() * aiActivityDescriptions.length)];
+    const randomDescription = enhancedActivityDescriptions[Math.floor(Math.random() * enhancedActivityDescriptions.length)];
     updateActivity(actId, 'description', randomDescription);
     
     toast({
       title: "AI Activity Description Generated!",
-      description: "Activity description has been created highlighting your impact.",
+      description: "Leadership-focused activity description highlighting impact and quantified results.",
     });
   };
 
@@ -443,10 +476,13 @@ const ResumeBuilder = () => {
     try {
       const resumeData = {
         user_id: user?.id,
-        title: `${personalInfo.firstName} ${personalInfo.lastName}'s Resume`,
+        title: `${personalInfo.firstName || 'My'} ${personalInfo.lastName || 'Resume'}`,
         personal_info: personalInfo as any,
         experience: experience as any,
         education: education as any,
+        projects: projects as any,
+        activities: activities as any,
+        references: references as any,
         skills: skills,
         summary: personalInfo.summary
       };
@@ -487,77 +523,176 @@ const ResumeBuilder = () => {
 
   const handleDownloadPDF = async () => {
     try {
-      const element = document.getElementById('resume-preview');
+      const element = document.getElementById('resume-preview-export');
       if (!element) {
-        toast({
-          title: "Error",
-          description: "Resume preview not found.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const canvas = await html2canvas(element, {
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        height: element.scrollHeight,
-        width: element.scrollWidth,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // Scale down if content is too tall for one page
-      if (imgHeight > pageHeight) {
-        const scaleFactor = pageHeight / imgHeight;
-        const scaledWidth = imgWidth * scaleFactor;
-        const scaledHeight = pageHeight;
-        const xOffset = (imgWidth - scaledWidth) / 2;
+        // Create a hidden element with the resume content for PDF export
+        const exportElement = document.createElement('div');
+        exportElement.id = 'resume-preview-export';
+        exportElement.style.position = 'absolute';
+        exportElement.style.left = '-9999px';
+        exportElement.style.width = '8.5in';
+        exportElement.style.backgroundColor = 'white';
+        exportElement.style.padding = '0.5in';
+        exportElement.style.fontSize = '11px';
+        exportElement.style.lineHeight = '1.4';
+        exportElement.style.fontFamily = 'Arial, sans-serif';
         
-        pdf.addImage(imgData, 'PNG', xOffset, 0, scaledWidth, scaledHeight);
-      } else {
+        exportElement.innerHTML = generateResumeHTML();
+        document.body.appendChild(exportElement);
+
+        const canvas = await html2canvas(exportElement, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: 816, // 8.5 inches at 96 DPI
+          height: 1056 // 11 inches at 96 DPI
+        });
+
+        document.body.removeChild(exportElement);
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'in',
+          format: 'letter'
+        });
+
+        const imgWidth = 8.5;
+        const imgHeight = 11;
+        
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        pdf.save(`${personalInfo.firstName || 'Resume'}_${personalInfo.lastName || 'Document'}.pdf`);
+
+        // Track download
+        if (currentResumeId) {
+          const { data: currentResume } = await supabase
+            .from('resumes')
+            .select('downloads')
+            .eq('id', currentResumeId)
+            .single();
+
+          await supabase
+            .from('resumes')
+            .update({ 
+              downloads: (currentResume?.downloads || 0) + 1 
+            })
+            .eq('id', currentResumeId);
+        }
+
+        toast({
+          title: "Resume Downloaded",
+          description: "Your resume has been downloaded as a PDF file.",
+        });
       }
-
-      pdf.save(`${personalInfo.firstName}_${personalInfo.lastName}_Resume.pdf`);
-
-      // Track download and increment counter
-      if (currentResumeId) {
-        const { data: currentResume } = await supabase
-          .from('resumes')
-          .select('downloads')
-          .eq('id', currentResumeId)
-          .single();
-
-        await supabase
-          .from('resumes')
-          .update({ 
-            downloads: (currentResume?.downloads || 0) + 1 
-          })
-          .eq('id', currentResumeId);
-      }
-
-      toast({
-        title: "Resume Downloaded",
-        description: "Your resume has been downloaded as a PDF file.",
-      });
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
         title: "Download Failed",
-        description: "There was an error downloading your resume.",
+        description: "There was an error downloading your resume. Please try again.",
         variant: "destructive",
       });
     }
+  };
+
+  const generateResumeHTML = () => {
+    const data = {
+      personalInfo: personalInfo.firstName ? personalInfo : {
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@email.com',
+        phone: '+1 (555) 123-4567',
+        location: 'New York, NY',
+        website: 'linkedin.com/in/johndoe',
+        summary: 'Professional summary will appear here...'
+      },
+      experience: experience.length > 0 ? experience : [],
+      education: education.length > 0 ? education : [],
+      projects: projects.length > 0 ? projects : [],
+      skills: skills.length > 0 ? skills : []
+    };
+
+    return `
+      <div style="max-width: 7.5in; margin: 0 auto; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #333;">
+        <!-- Header -->
+        <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
+          <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: bold; color: #1a1a1a;">
+            ${data.personalInfo.firstName} ${data.personalInfo.lastName}
+          </h1>
+          <div style="font-size: 10px; color: #666;">
+            ${data.personalInfo.email} • ${data.personalInfo.phone} • ${data.personalInfo.location} • ${data.personalInfo.website}
+          </div>
+        </div>
+
+        <!-- Summary -->
+        ${data.personalInfo.summary ? `
+        <div style="margin-bottom: 15px;">
+          <h2 style="font-size: 13px; font-weight: bold; color: #1a1a1a; margin: 0 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 2px;">
+            PROFESSIONAL SUMMARY
+          </h2>
+          <p style="margin: 0; font-size: 10px; line-height: 1.4;">${data.personalInfo.summary}</p>
+        </div>
+        ` : ''}
+
+        <!-- Experience -->
+        ${data.experience.length > 0 ? `
+        <div style="margin-bottom: 15px;">
+          <h2 style="font-size: 13px; font-weight: bold; color: #1a1a1a; margin: 0 0 8px 0; border-bottom: 1px solid #ccc; padding-bottom: 2px;">
+            PROFESSIONAL EXPERIENCE
+          </h2>
+          ${data.experience.slice(0, 3).map(exp => `
+            <div style="margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                <div>
+                  <h3 style="margin: 0; font-size: 11px; font-weight: bold;">${exp.title || 'Job Title'}</h3>
+                  <p style="margin: 0; font-size: 10px; color: #666;">${exp.company || 'Company'} • ${exp.location}</p>
+                </div>
+                <span style="font-size: 10px; color: #666; white-space: nowrap;">${exp.startDate} - ${exp.endDate}</span>
+              </div>
+              <div style="font-size: 9px; margin-left: 0; line-height: 1.3;">
+                ${exp.description.split('\n').map(line => `<div style="margin-bottom: 1px;">${line}</div>`).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        <!-- Education and Skills in two columns -->
+        <div style="display: flex; gap: 20px;">
+          <!-- Education -->
+          ${data.education.length > 0 ? `
+          <div style="flex: 1;">
+            <h2 style="font-size: 13px; font-weight: bold; color: #1a1a1a; margin: 0 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 2px;">
+              EDUCATION
+            </h2>
+            ${data.education.slice(0, 2).map(edu => `
+              <div style="margin-bottom: 8px;">
+                <h3 style="margin: 0; font-size: 10px; font-weight: bold;">${edu.degree || 'Degree'}</h3>
+                <p style="margin: 0; font-size: 9px; color: #666;">${edu.school || 'School'} • ${edu.location}</p>
+                <p style="margin: 0; font-size: 9px; color: #666;">${edu.startDate} - ${edu.endDate}</p>
+              </div>
+            `).join('')}
+          </div>
+          ` : '<div style="flex: 1;"></div>'}
+
+          <!-- Skills -->
+          ${data.skills.length > 0 ? `
+          <div style="flex: 1;">
+            <h2 style="font-size: 13px; font-weight: bold; color: #1a1a1a; margin: 0 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 2px;">
+              TECHNICAL SKILLS
+            </h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+              ${data.skills.slice(0, 12).map(skill => `
+                <span style="background: #f0f0f0; color: #333; padding: 2px 6px; border-radius: 3px; font-size: 9px; border: 1px solid #ddd;">
+                  ${skill}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+          ` : '<div style="flex: 1;"></div>'}
+        </div>
+      </div>
+    `;
   };
 
   const applyAISuggestions = (suggestions: any) => {
@@ -615,6 +750,10 @@ const ResumeBuilder = () => {
                 <Button variant="outline" onClick={() => setShowUploadModal(true)} className="hover-lift">
                   <Upload className="w-4 h-4 mr-2" />
                   Upload Resume
+                </Button>
+                <Button variant="outline" onClick={() => setShowPreviewModal(true)} className="hover-lift">
+                  <Eye className="w-4 h-4 mr-2" />
+                  Preview
                 </Button>
                 <Button variant="outline" onClick={handleSave} className="hover-lift">
                   <Save className="w-4 h-4 mr-2" />
@@ -1225,7 +1364,7 @@ const ResumeBuilder = () => {
               </Card>
             </div>
 
-            {/* Enhanced Preview Panel - Optimized for one page */}
+            {/* Compact Preview Panel */}
             <div className="lg:col-span-1">
               <Card className="border-0 shadow-lg sticky top-24">
                 <CardHeader>
@@ -1277,82 +1416,25 @@ const ResumeBuilder = () => {
                       </div>
                     )}
 
-                    {/* Compact Experience */}
-                    {experience.length > 0 && (
-                      <div>
-                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">EXPERIENCE</h2>
-                        {experience.slice(0, 3).map((exp) => (
-                          <div key={exp.id} className="mb-1">
-                            <div className="flex justify-between items-start">
-                              <h3 className="font-medium text-gray-900 text-[8px]">{exp.title || 'Job Title'}</h3>
-                              <span className="text-[6px] text-gray-500">{exp.startDate} - {exp.endDate}</span>
-                            </div>
-                            <p className="text-[7px] text-gray-600">{exp.company || 'Company'} • {exp.location}</p>
-                            <p className="text-[6px] text-gray-700 leading-tight">{exp.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Compact Projects */}
-                    {projects.length > 0 && (
-                      <div>
-                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">PROJECTS</h2>
-                        {projects.slice(0, 2).map((proj) => (
-                          <div key={proj.id} className="mb-1">
-                            <div className="flex justify-between items-start">
-                              <h3 className="font-medium text-gray-900 text-[8px]">{proj.title || 'Project Title'}</h3>
-                              <span className="text-[6px] text-gray-500">{proj.startDate} - {proj.endDate}</span>
-                            </div>
-                            <p className="text-[6px] text-gray-600">{proj.technologies}</p>
-                            <p className="text-[6px] text-gray-700 leading-tight">{proj.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Compact Education */}
-                    {education.length > 0 && (
-                      <div>
-                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">EDUCATION</h2>
-                        {education.slice(0, 2).map((edu) => (
-                          <div key={edu.id} className="mb-0.5">
-                            <h3 className="font-medium text-gray-900 text-[8px]">{edu.degree || 'Degree'}</h3>
-                            <p className="text-[7px] text-gray-600">{edu.school || 'School'} • {edu.location}</p>
-                            <p className="text-[6px] text-gray-500">{edu.startDate} - {edu.endDate}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Compact Activities */}
-                    {activities.length > 0 && (
-                      <div>
-                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">ACTIVITIES</h2>
-                        {activities.slice(0, 2).map((act) => (
-                          <div key={act.id} className="mb-1">
-                            <div className="flex justify-between items-start">
-                              <h3 className="font-medium text-gray-900 text-[8px]">{act.title || 'Activity'}</h3>
-                              <span className="text-[6px] text-gray-500">{act.startDate} - {act.endDate}</span>
-                            </div>
-                            <p className="text-[6px] text-gray-600">{act.organization} • {act.role}</p>
-                            <p className="text-[6px] text-gray-700 leading-tight">{act.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Compact Skills */}
-                    {skills.length > 0 && (
-                      <div>
-                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[9px]">SKILLS</h2>
-                        <div className="flex flex-wrap gap-0.5">
-                          {skills.slice(0, 12).map((skill, index) => (
-                            <span key={index} className="text-[6px] bg-gray-100 text-gray-700 px-1 py-0.5 rounded">
-                              {skill}
-                            </span>
-                          ))}
+                    {/* Show sample data if no real data */}
+                    {experience.length === 0 && (
+                      <div className="mb-2">
+                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[7px]">EXPERIENCE</h2>
+                        <div className="text-[6px] text-gray-500 italic">
+                          Add your work experience to see it here
                         </div>
+                      </div>
+                    )}
+
+                    {experience.length > 0 && (
+                      <div className="mb-2">
+                        <h2 className="font-semibold text-gray-900 mb-0.5 text-[7px]">EXPERIENCE</h2>
+                        {experience.slice(0, 2).map((exp) => (
+                          <div key={exp.id} className="mb-1">
+                            <h3 className="font-medium text-gray-900 text-[6px]">{exp.title}</h3>
+                            <p className="text-[5px] text-gray-600">{exp.company}</p>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -1363,6 +1445,7 @@ const ResumeBuilder = () => {
         </div>
       </div>
 
+      {/* Modals */}
       <AIFeedbackModal 
         isOpen={showAIModal} 
         onClose={() => setShowAIModal(false)}
@@ -1373,6 +1456,13 @@ const ResumeBuilder = () => {
       <ResumeUploadModal 
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
+      />
+
+      <ResumePreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        resumeData={{ personalInfo, experience, education, projects, skills }}
+        onDownload={handleDownloadPDF}
       />
     </div>
   );
