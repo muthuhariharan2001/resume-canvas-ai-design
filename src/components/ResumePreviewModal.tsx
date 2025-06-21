@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -270,28 +269,30 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
           </div>
         </div>
 
-        {/* Add print-specific styles */}
-        <style jsx>{`
-          @media print {
-            .print-friendly {
-              font-size: 10px !important;
-              line-height: 1.3 !important;
+        {/* Add print-specific styles - Fixed */}
+        <style>
+          {`
+            @media print {
+              .print-friendly {
+                font-size: 10px !important;
+                line-height: 1.3 !important;
+              }
+              .print-friendly h1 {
+                font-size: 18px !important;
+                margin-bottom: 6px !important;
+              }
+              .print-friendly h2 {
+                font-size: 12px !important;
+                margin-bottom: 8px !important;
+                border-bottom: 1px solid #000 !important;
+                padding-bottom: 2px !important;
+              }
+              .print-friendly h3 {
+                font-size: 11px !important;
+              }
             }
-            .print-friendly h1 {
-              font-size: 18px !important;
-              margin-bottom: 6px !important;
-            }
-            .print-friendly h2 {
-              font-size: 12px !important;
-              margin-bottom: 8px !important;
-              border-bottom: 1px solid #000 !important;
-              padding-bottom: 2px !important;
-            }
-            .print-friendly h3 {
-              font-size: 11px !important;
-            }
-          }
-        `}</style>
+          `}
+        </style>
       </DialogContent>
     </Dialog>
   );
