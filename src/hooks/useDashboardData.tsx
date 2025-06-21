@@ -36,14 +36,20 @@ export const useDashboardData = () => {
     if (!user) return;
     
     try {
+      console.log('Loading user data for user:', user.id);
+      
       const { data: resumesData, error: resumesError } = await supabase
         .from('resumes')
         .select('*')
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
 
-      if (resumesError) throw resumesError;
+      if (resumesError) {
+        console.error('Error loading resumes:', resumesError);
+        throw resumesError;
+      }
 
+      console.log('Loaded resumes data:', resumesData);
       setResumes(resumesData || []);
 
       const totalResumes = resumesData?.length || 0;
@@ -74,6 +80,8 @@ export const useDashboardData = () => {
 
   const deleteResume = async (resumeId: string) => {
     try {
+      console.log('Deleting resume:', resumeId);
+      
       const { error } = await supabase
         .from('resumes')
         .delete()
@@ -82,13 +90,15 @@ export const useDashboardData = () => {
 
       if (error) throw error;
 
+      // Update local state immediately
       setResumes(prev => prev.filter(resume => resume.id !== resumeId));
       toast({
         title: "Resume Deleted",
         description: "Your resume has been deleted successfully.",
       });
       
-      loadUserData();
+      // Refresh data to ensure consistency
+      await loadUserData();
     } catch (error) {
       console.error('Error deleting resume:', error);
       toast({
@@ -101,6 +111,8 @@ export const useDashboardData = () => {
 
   const viewResume = async (resumeId: string) => {
     try {
+      console.log('Viewing resume:', resumeId);
+      
       const { data: currentResume } = await supabase
         .from('resumes')
         .select('views')
@@ -116,7 +128,8 @@ export const useDashboardData = () => {
 
       window.open(`/builder?id=${resumeId}&mode=preview`, '_blank');
       
-      loadUserData();
+      // Refresh data after view count update
+      await loadUserData();
     } catch (error) {
       console.error('Error viewing resume:', error);
       toast({
@@ -126,6 +139,36 @@ export const useDashboardData = () => {
       });
     }
   };
+
+  // Set up real-time subscription for resumes
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('Setting up real-time subscription for user:', user.id);
+
+    const subscription = supabase
+      .channel('resumes_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'resumes',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          // Refresh data when any change occurs
+          loadUserData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(subscription);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {

@@ -94,16 +94,24 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
           </div>
         </DialogHeader>
         
-        {/* Professional Resume Layout - Single Page Optimized */}
+        {/* Enhanced Professional Resume Layout */}
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          <div id="resume-content" className="p-6 space-y-4 max-w-[8.5in] mx-auto" style={{ fontSize: '11px', lineHeight: '1.3' }}>
+          <div 
+            id="resume-content" 
+            className="p-6 space-y-4 max-w-[8.5in] mx-auto print-friendly" 
+            style={{ 
+              fontSize: '11px', 
+              lineHeight: '1.4',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+          >
             
-            {/* Header Section */}
-            <div className="text-center border-b-2 border-gray-300 pb-3 mb-4">
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            {/* Header Section - Fixed spacing */}
+            <div className="text-center pb-4 mb-4" style={{ borderBottom: '2px solid #374151' }}>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2" style={{ marginBottom: '8px' }}>
                 {sampleData.personalInfo.firstName} {sampleData.personalInfo.lastName}
               </h1>
-              <div className="flex justify-center items-center space-x-4 text-sm text-gray-600 flex-wrap">
+              <div className="flex justify-center items-center space-x-3 text-sm text-gray-600 flex-wrap">
                 <span>{sampleData.personalInfo.email}</span>
                 <span>•</span>
                 <span>{sampleData.personalInfo.phone}</span>
@@ -114,36 +122,50 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
               </div>
             </div>
 
-            {/* Professional Summary */}
+            {/* Professional Summary - Fixed underline spacing */}
             <div className="mb-4">
-              <h2 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide border-b border-gray-200 pb-1">
+              <h2 
+                className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide pb-1" 
+                style={{ 
+                  borderBottom: '1px solid #d1d5db',
+                  marginBottom: '12px',
+                  paddingBottom: '4px'
+                }}
+              >
                 Professional Summary
               </h2>
-              <p className="text-gray-700 text-xs leading-relaxed">
+              <p className="text-gray-700 text-xs leading-relaxed" style={{ lineHeight: '1.5' }}>
                 {sampleData.personalInfo.summary}
               </p>
             </div>
 
-            {/* Experience Section */}
+            {/* Experience Section - Fixed formatting */}
             <div className="mb-4">
-              <h2 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide border-b border-gray-200 pb-1">
+              <h2 
+                className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide pb-1" 
+                style={{ 
+                  borderBottom: '1px solid #d1d5db',
+                  marginBottom: '12px',
+                  paddingBottom: '4px'
+                }}
+              >
                 Professional Experience
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {sampleData.experience.slice(0, 2).map((exp: any, index: number) => (
-                  <div key={exp.id || index}>
-                    <div className="flex justify-between items-start mb-1">
+                  <div key={exp.id || index} className="mb-3">
+                    <div className="flex justify-between items-start mb-2">
                       <div>
                         <h3 className="font-semibold text-gray-900 text-xs">{exp.title}</h3>
                         <p className="text-gray-700 text-xs">{exp.company} • {exp.location}</p>
                       </div>
-                      <span className="text-xs text-gray-600 whitespace-nowrap">
+                      <span className="text-xs text-gray-600 whitespace-nowrap ml-4">
                         {exp.startDate} - {exp.endDate}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-700 ml-0">
+                    <div className="text-xs text-gray-700" style={{ lineHeight: '1.4' }}>
                       {exp.description.split('\n').map((line: string, i: number) => (
-                        <div key={i} className="mb-0.5">{line}</div>
+                        <div key={i} className="mb-1">{line}</div>
                       ))}
                     </div>
                   </div>
@@ -151,25 +173,34 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
               </div>
             </div>
 
-            {/* Projects Section */}
+            {/* Projects Section - Enhanced */}
             {sampleData.projects.length > 0 && (
               <div className="mb-4">
-                <h2 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide border-b border-gray-200 pb-1">
+                <h2 
+                  className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide pb-1" 
+                  style={{ 
+                    borderBottom: '1px solid #d1d5db',
+                    marginBottom: '12px',
+                    paddingBottom: '4px'
+                  }}
+                >
                   Key Projects
                 </h2>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {sampleData.projects.slice(0, 2).map((proj: any, index: number) => (
-                    <div key={proj.id || index}>
+                    <div key={proj.id || index} className="mb-3">
                       <div className="flex justify-between items-start mb-1">
                         <h3 className="font-semibold text-gray-900 text-xs">{proj.title}</h3>
-                        <span className="text-xs text-gray-600 whitespace-nowrap">
+                        <span className="text-xs text-gray-600 whitespace-nowrap ml-4">
                           {proj.startDate} - {proj.endDate}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-600 mb-1"><strong>Technologies:</strong> {proj.technologies}</p>
-                      <div className="text-xs text-gray-700">
+                      <p className="text-xs text-gray-600 mb-2">
+                        <strong>Technologies:</strong> {proj.technologies}
+                      </p>
+                      <div className="text-xs text-gray-700" style={{ lineHeight: '1.4' }}>
                         {proj.description.split('\n').map((line: string, i: number) => (
-                          <div key={i} className="mb-0.5">{line}</div>
+                          <div key={i} className="mb-1">{line}</div>
                         ))}
                       </div>
                     </div>
@@ -178,20 +209,27 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
               </div>
             )}
 
-            {/* Two-column layout for Education and Skills */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Two-column layout for Education and Skills - Improved */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Education Section */}
               <div>
-                <h2 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide border-b border-gray-200 pb-1">
+                <h2 
+                  className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide pb-1" 
+                  style={{ 
+                    borderBottom: '1px solid #d1d5db',
+                    marginBottom: '12px',
+                    paddingBottom: '4px'
+                  }}
+                >
                   Education
                 </h2>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {sampleData.education.slice(0, 2).map((edu: any, index: number) => (
-                    <div key={edu.id || index}>
-                      <h3 className="font-semibold text-gray-900 text-xs">{edu.degree}</h3>
+                    <div key={edu.id || index} className="mb-3">
+                      <h3 className="font-semibold text-gray-900 text-xs mb-1">{edu.degree}</h3>
                       <p className="text-gray-700 text-xs">{edu.school}</p>
                       <p className="text-gray-600 text-xs">{edu.location}</p>
-                      <div className="flex justify-between text-xs text-gray-600">
+                      <div className="flex justify-between text-xs text-gray-600 mt-1">
                         <span>{edu.startDate} - {edu.endDate}</span>
                         {edu.gpa && <span>GPA: {edu.gpa}</span>}
                       </div>
@@ -200,16 +238,28 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                 </div>
               </div>
 
-              {/* Skills Section */}
+              {/* Skills Section - Better formatting */}
               <div>
-                <h2 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide border-b border-gray-200 pb-1">
+                <h2 
+                  className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide pb-1" 
+                  style={{ 
+                    borderBottom: '1px solid #d1d5db',
+                    marginBottom: '12px',
+                    paddingBottom: '4px'
+                  }}
+                >
                   Technical Skills
                 </h2>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {sampleData.skills.slice(0, 12).map((skill: string, index: number) => (
                     <span 
                       key={index} 
-                      className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs border"
+                      className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs border"
+                      style={{ 
+                        fontSize: '10px',
+                        padding: '3px 6px',
+                        marginBottom: '3px'
+                      }}
                     >
                       {skill}
                     </span>
@@ -219,6 +269,29 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Add print-specific styles */}
+        <style jsx>{`
+          @media print {
+            .print-friendly {
+              font-size: 10px !important;
+              line-height: 1.3 !important;
+            }
+            .print-friendly h1 {
+              font-size: 18px !important;
+              margin-bottom: 6px !important;
+            }
+            .print-friendly h2 {
+              font-size: 12px !important;
+              margin-bottom: 8px !important;
+              border-bottom: 1px solid #000 !important;
+              padding-bottom: 2px !important;
+            }
+            .print-friendly h3 {
+              font-size: 11px !important;
+            }
+          }
+        `}</style>
       </DialogContent>
     </Dialog>
   );

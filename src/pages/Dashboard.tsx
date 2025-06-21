@@ -8,11 +8,16 @@ import ResumesList from '@/components/dashboard/ResumesList';
 import TemplatesGrid from '@/components/dashboard/TemplatesGrid';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import { Plus, TrendingUp } from 'lucide-react';
+import { Plus, TrendingUp, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Dashboard = () => {
-  const { resumes, stats, loading, deleteResume, viewResume } = useDashboardData();
+  const { resumes, stats, loading, deleteResume, viewResume, refreshData } = useDashboardData();
+
+  const handleRefresh = async () => {
+    console.log('Manual refresh triggered');
+    await refreshData();
+  };
 
   if (loading) {
     return (
@@ -47,7 +52,15 @@ const Dashboard = () => {
                 <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
                 <p className="mt-2 text-gray-600">Welcome back! Manage your resumes and track your success</p>
               </div>
-              <div className="mt-4 sm:mt-0">
+              <div className="mt-4 sm:mt-0 flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleRefresh}
+                  className="hover-lift"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover-lift" asChild>
                   <Link to="/builder">
                     <Plus className="w-4 h-4 mr-2" />
