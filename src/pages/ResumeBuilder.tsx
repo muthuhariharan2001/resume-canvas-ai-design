@@ -525,10 +525,10 @@ const ResumeBuilder = () => {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          const value = e.target.value.trim();
+                          const value = (e.target as HTMLInputElement).value.trim();
                           if (value) {
                             addSectionItem('skills', { skill: value });
-                            e.target.value = '';
+                            (e.target as HTMLInputElement).value = '';
                           }
                         }
                       }}
@@ -538,8 +538,8 @@ const ResumeBuilder = () => {
                       type="button"
                       variant="secondary"
                       onClick={(e) => {
-                        const input = e.target.parentElement.querySelector('input');
-                        const value = input.value.trim();
+                        const input = (e.target as HTMLElement).parentElement?.querySelector('input') as HTMLInputElement;
+                        const value = input?.value.trim();
                         if (value) {
                           addSectionItem('skills', { skill: value });
                           input.value = '';
