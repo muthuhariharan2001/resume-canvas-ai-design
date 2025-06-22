@@ -1,17 +1,28 @@
+
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import DashboardStats from '@/components/DashboardStats';
-import RecentActivity from '@/components/RecentActivity';
-import ResumesList from '@/components/ResumesList';
-import TemplatesGrid from '@/components/TemplatesGrid';
+import DashboardStats from '@/components/dashboard/DashboardStats';
+import RecentActivity from '@/components/dashboard/RecentActivity';
+import ResumesList from '@/components/dashboard/ResumesList';
+import TemplatesGrid from '@/components/dashboard/TemplatesGrid';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { stats, recentResumes, loading, lastRefresh, refreshData } = useDashboardData();
+
+  const handleViewResume = (resumeId: string) => {
+    console.log('Viewing resume:', resumeId);
+    // TODO: Implement resume view functionality
+  };
+
+  const handleDeleteResume = (resumeId: string) => {
+    console.log('Deleting resume:', resumeId);
+    // TODO: Implement resume delete functionality
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,8 +59,12 @@ const Dashboard = () => {
 
               {/* Recent Activity */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <RecentActivity />
-                <ResumesList resumes={recentResumes} />
+                <RecentActivity resumes={recentResumes} />
+                <ResumesList 
+                  resumes={recentResumes} 
+                  onView={handleViewResume}
+                  onDelete={handleDeleteResume}
+                />
               </div>
 
               {/* Templates */}
