@@ -29,7 +29,7 @@ const ResumeBuilder = () => {
   const [activities, setActivities] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-	const [selectedTemplate, setSelectedTemplate] = useState('professional');
+  const [selectedTemplate, setSelectedTemplate] = useState('professional');
   const { toast } = useToast()
 
   useEffect(() => {
@@ -47,13 +47,13 @@ const ResumeBuilder = () => {
           }
 
           if (data) {
-            setPersonalInfo(data.personalInfo || personalInfo);
-            setExperience(data.experience || experience);
-            setEducation(data.education || education);
-            setProjects(data.projects || projects);
-            setSkills(data.skills || skills);
-            setReferences(data.resume_references || resume_references);
-            setActivities(data.activities || activities);
+            setPersonalInfo((data.personal_info as any) || personalInfo);
+            setExperience((data.experience as any[]) || []);
+            setEducation((data.education as any[]) || []);
+            setProjects((data.projects as any[]) || []);
+            setSkills((data.skills as string[]) || []);
+            setReferences((data.resume_references as any[]) || []);
+            setActivities((data.activities as any[]) || []);
           }
         } catch (error) {
           console.error('Error fetching resume data:', error);
@@ -129,7 +129,7 @@ const ResumeBuilder = () => {
       case 'references':
         setReferences(prev => prev.filter(item => item.id !== id));
         break;
-       case 'activities':
+      case 'activities':
         setActivities(prev => prev.filter(item => item.id !== id));
         break;
       default:
@@ -155,14 +155,14 @@ const ResumeBuilder = () => {
         .upsert([
           {
             user_id: user.id,
-            personalInfo,
+            personal_info: personalInfo,
             experience,
             education,
             projects,
             skills,
             resume_references,
             activities,
-            updated_at: new Date()
+            updated_at: new Date().toISOString()
           }
         ], { onConflict: 'user_id' });
 
@@ -631,15 +631,17 @@ const ResumeBuilder = () => {
                 Live Preview - {selectedTemplate.charAt(0).toUpperCase() + selectedTemplate.slice(1)} Template
               </h3>
               <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 h-96 overflow-y-auto">
-                <ResumePreviewModal
-                  isOpen={false}
-                  onClose={() => {}}
-                  resumeData={getDisplayData()}
-                  onDownload={() => {}}
-                  template={selectedTemplate}
-                />
-                <div className="text-center text-gray-500 text-sm">
-                  Click "Preview Resume" to see full preview
+                <div className="text-center text-gray-500 text-sm mb-4">
+                  Live preview with {selectedTemplate} template
+                </div>
+                <div className="scale-50 origin-top-left transform w-[200%] h-[200%]">
+                  <ResumePreviewModal
+                    isOpen={false}
+                    onClose={() => {}}
+                    resumeData={getDisplayData()}
+                    onDownload={() => {}}
+                    template={selectedTemplate}
+                  />
                 </div>
               </div>
             </div>
