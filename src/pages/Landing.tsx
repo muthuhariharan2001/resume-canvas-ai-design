@@ -120,10 +120,10 @@ const Landing = () => {
               ) : (
                 <div className="flex items-center space-x-4">
                   <Button variant="ghost" asChild>
-                    <Link to="/auth/login">Sign In</Link>
+                    <Link to="/login">Sign In</Link>
                   </Button>
                   <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                    <Link to="/auth/signup">Get Started</Link>
+                    <Link to="/signup">Get Started</Link>
                   </Button>
                 </div>
               )}
@@ -170,10 +170,10 @@ const Landing = () => {
                 ) : (
                   <div className="px-3 py-2 space-y-2">
                     <Button variant="ghost" className="w-full justify-start" asChild>
-                      <Link to="/auth/login">Sign In</Link>
+                      <Link to="/login">Sign In</Link>
                     </Button>
                     <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" asChild>
-                      <Link to="/auth/signup">Get Started</Link>
+                      <Link to="/signup">Get Started</Link>
                     </Button>
                   </div>
                 )}
