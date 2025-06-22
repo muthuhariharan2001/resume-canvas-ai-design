@@ -9,7 +9,8 @@ export const useDashboardData = () => {
     totalResumes: 0,
     totalDownloads: 0,
     totalViews: 0,
-    lastMonthResumes: 0
+    lastMonthResumes: 0,
+    successRate: 0
   });
   const [recentResumes, setRecentResumes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,11 +48,16 @@ export const useDashboardData = () => {
         new Date(resume.created_at) >= lastMonth
       ).length;
 
+      // Calculate success rate based on engagement (views + downloads)
+      const totalEngagement = totalViews + totalDownloads;
+      const successRate = totalResumes > 0 ? Math.round((totalEngagement / (totalResumes * 10)) * 100) : 0;
+
       setStats({
         totalResumes,
         totalDownloads,
         totalViews,
-        lastMonthResumes
+        lastMonthResumes,
+        successRate: Math.min(successRate, 100) // Cap at 100%
       });
 
       // Set recent resumes (limit to 5)
