@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
@@ -36,14 +37,16 @@ const ResumeBuilder = () => {
     const fetchResumeData = async () => {
       if (user) {
         try {
+          // Use maybeSingle() instead of single() to handle cases where no data exists
           const { data, error } = await supabase
             .from('resumes')
             .select('*')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
           if (error) {
             console.error('Error fetching resume data:', error);
+            return;
           }
 
           if (data) {
@@ -80,7 +83,10 @@ const ResumeBuilder = () => {
         setProjects(prev => [...prev, { id: uuidv4(), ...newItem }]);
         break;
       case 'skills':
-        setSkills(prev => [...prev, newItem.skill ? newItem.skill.split(',').map(s => s.trim()) : []].flat());
+        if (newItem.skill && newItem.skill.trim()) {
+          const newSkills = newItem.skill.split(',').map(s => s.trim()).filter(s => s.length > 0);
+          setSkills(prev => [...new Set([...prev, ...newSkills])]);
+        }
         break;
       case 'references':
         setReferences(prev => [...prev, { id: uuidv4(), ...newItem }]);
@@ -132,6 +138,9 @@ const ResumeBuilder = () => {
       case 'activities':
         setActivities(prev => prev.filter(item => item.id !== id));
         break;
+      case 'skills':
+        setSkills(prev => prev.filter((_, index) => index !== id));
+        break;
       default:
         break;
     }
@@ -150,10 +159,35 @@ const ResumeBuilder = () => {
     }
 
     try {
-      const { data, error } = await supabase
+      // First, check if a resume already exists for this user
+      const { data: existingResume } = await supabase
         .from('resumes')
-        .upsert([
-          {
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      let result;
+      
+      if (existingResume) {
+        // Update existing resume
+        result = await supabase
+          .from('resumes')
+          .update({
+            personal_info: personalInfo,
+            experience,
+            education,
+            projects,
+            skills,
+            resume_references,
+            activities,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+      } else {
+        // Insert new resume
+        result = await supabase
+          .from('resumes')
+          .insert([{
             user_id: user.id,
             personal_info: personalInfo,
             experience,
@@ -163,18 +197,18 @@ const ResumeBuilder = () => {
             resume_references,
             activities,
             updated_at: new Date().toISOString()
-          }
-        ], { onConflict: 'user_id' });
+          }]);
+      }
 
-      if (error) {
-        console.error('Error saving resume:', error);
+      if (result.error) {
+        console.error('Error saving resume:', result.error);
         toast({
           title: "Error saving resume",
           description: "Please try again.",
           variant: "destructive",
         })
       } else {
-        console.log('Resume saved successfully!', data);
+        console.log('Resume saved successfully!', result.data);
         setShowSuccess(true);
         toast({
           title: "Resume saved successfully!",
@@ -315,21 +349,21 @@ const ResumeBuilder = () => {
                       <Input
                         type="text"
                         placeholder="Title"
-                        value={exp.title}
+                        value={exp.title || ''}
                         onChange={(e) => updateSectionItem('experience', exp.id, { title: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="text"
                         placeholder="Company"
-                        value={exp.company}
+                        value={exp.company || ''}
                         onChange={(e) => updateSectionItem('experience', exp.id, { company: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="text"
                         placeholder="Location"
-                        value={exp.location}
+                        value={exp.location || ''}
                         onChange={(e) => updateSectionItem('experience', exp.id, { location: e.target.value })}
                         className="mb-2"
                       />
@@ -337,19 +371,19 @@ const ResumeBuilder = () => {
                         <Input
                           type="text"
                           placeholder="Start Date"
-                          value={exp.startDate}
+                          value={exp.startDate || ''}
                           onChange={(e) => updateSectionItem('experience', exp.id, { startDate: e.target.value })}
                         />
                         <Input
                           type="text"
                           placeholder="End Date"
-                          value={exp.endDate}
+                          value={exp.endDate || ''}
                           onChange={(e) => updateSectionItem('experience', exp.id, { endDate: e.target.value })}
                         />
                       </div>
                       <Textarea
                         placeholder="Description"
-                        value={exp.description}
+                        value={exp.description || ''}
                         onChange={(e) => updateSectionItem('experience', exp.id, { description: e.target.value })}
                         className="mb-2"
                       />
@@ -375,21 +409,21 @@ const ResumeBuilder = () => {
                       <Input
                         type="text"
                         placeholder="Degree"
-                        value={edu.degree}
+                        value={edu.degree || ''}
                         onChange={(e) => updateSectionItem('education', edu.id, { degree: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="text"
                         placeholder="School"
-                        value={edu.school}
+                        value={edu.school || ''}
                         onChange={(e) => updateSectionItem('education', edu.id, { school: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="text"
                         placeholder="Location"
-                        value={edu.location}
+                        value={edu.location || ''}
                         onChange={(e) => updateSectionItem('education', edu.id, { location: e.target.value })}
                         className="mb-2"
                       />
@@ -397,20 +431,20 @@ const ResumeBuilder = () => {
                         <Input
                           type="text"
                           placeholder="Start Date"
-                          value={edu.startDate}
+                          value={edu.startDate || ''}
                           onChange={(e) => updateSectionItem('education', edu.id, { startDate: e.target.value })}
                         />
                         <Input
                           type="text"
                           placeholder="End Date"
-                          value={edu.endDate}
+                          value={edu.endDate || ''}
                           onChange={(e) => updateSectionItem('education', edu.id, { endDate: e.target.value })}
                         />
                       </div>
                       <Input
                         type="text"
                         placeholder="GPA"
-                        value={edu.gpa}
+                        value={edu.gpa || ''}
                         onChange={(e) => updateSectionItem('education', edu.id, { gpa: e.target.value })}
                         className="mb-2"
                       />
@@ -436,20 +470,20 @@ const ResumeBuilder = () => {
                       <Input
                         type="text"
                         placeholder="Title"
-                        value={project.title}
+                        value={project.title || ''}
                         onChange={(e) => updateSectionItem('projects', project.id, { title: e.target.value })}
                         className="mb-2"
                       />
                       <Textarea
                         placeholder="Description"
-                        value={project.description}
+                        value={project.description || ''}
                         onChange={(e) => updateSectionItem('projects', project.id, { description: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="text"
                         placeholder="Technologies"
-                        value={project.technologies}
+                        value={project.technologies || ''}
                         onChange={(e) => updateSectionItem('projects', project.id, { technologies: e.target.value })}
                         className="mb-2"
                       />
@@ -457,13 +491,13 @@ const ResumeBuilder = () => {
                         <Input
                           type="text"
                           placeholder="Start Date"
-                          value={project.startDate}
+                          value={project.startDate || ''}
                           onChange={(e) => updateSectionItem('projects', project.id, { startDate: e.target.value })}
                         />
                         <Input
                           type="text"
                           placeholder="End Date"
-                          value={project.endDate}
+                          value={project.endDate || ''}
                           onChange={(e) => updateSectionItem('projects', project.id, { endDate: e.target.value })}
                         />
                       </div>
@@ -484,16 +518,48 @@ const ResumeBuilder = () => {
                 {/* Skills */}
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">Skills</h2>
-                  <Input
-                    type="text"
-                    placeholder="Add skills separated by commas"
-                    onChange={(e) => addSectionItem('skills', { skill: e.target.value })}
-                    className="mb-2"
-                  />
+                  <div className="mb-4">
+                    <Input
+                      type="text"
+                      placeholder="Add skills separated by commas"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const value = e.target.value.trim();
+                          if (value) {
+                            addSectionItem('skills', { skill: value });
+                            e.target.value = '';
+                          }
+                        }
+                      }}
+                      className="mb-2"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={(e) => {
+                        const input = e.target.parentElement.querySelector('input');
+                        const value = input.value.trim();
+                        if (value) {
+                          addSectionItem('skills', { skill: value });
+                          input.value = '';
+                        }
+                      }}
+                    >
+                      Add Skills
+                    </Button>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {skills.map((skill, index) => (
-                      <div key={index} className="px-3 py-1 bg-gray-200 rounded-full text-sm">
+                      <div key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center gap-2">
                         {skill}
+                        <button
+                          type="button"
+                          onClick={() => deleteSectionItem('skills', index)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          ×
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -507,35 +573,35 @@ const ResumeBuilder = () => {
                       <Input
                         type="text"
                         placeholder="Name"
-                        value={reference.name}
+                        value={reference.name || ''}
                         onChange={(e) => updateSectionItem('references', reference.id, { name: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="text"
                         placeholder="Title"
-                        value={reference.title}
+                        value={reference.title || ''}
                         onChange={(e) => updateSectionItem('references', reference.id, { title: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="text"
                         placeholder="Company"
-                        value={reference.company}
+                        value={reference.company || ''}
                         onChange={(e) => updateSectionItem('references', reference.id, { company: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="email"
                         placeholder="Email"
-                        value={reference.email}
+                        value={reference.email || ''}
                         onChange={(e) => updateSectionItem('references', reference.id, { email: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="tel"
                         placeholder="Phone"
-                        value={reference.phone}
+                        value={reference.phone || ''}
                         onChange={(e) => updateSectionItem('references', reference.id, { phone: e.target.value })}
                         className="mb-2"
                       />
@@ -561,20 +627,20 @@ const ResumeBuilder = () => {
                       <Input
                         type="text"
                         placeholder="Title"
-                        value={activity.title}
+                        value={activity.title || ''}
                         onChange={(e) => updateSectionItem('activities', activity.id, { title: e.target.value })}
                         className="mb-2"
                       />
                       <Input
                         type="text"
                         placeholder="Organization"
-                        value={activity.organization}
+                        value={activity.organization || ''}
                         onChange={(e) => updateSectionItem('activities', activity.id, { organization: e.target.value })}
                         className="mb-2"
                       />
                       <Textarea
                         placeholder="Description"
-                        value={activity.description}
+                        value={activity.description || ''}
                         onChange={(e) => updateSectionItem('activities', activity.id, { description: e.target.value })}
                         className="mb-2"
                       />
@@ -582,13 +648,13 @@ const ResumeBuilder = () => {
                         <Input
                           type="text"
                           placeholder="Start Date"
-                          value={activity.startDate}
+                          value={activity.startDate || ''}
                           onChange={(e) => updateSectionItem('activities', activity.id, { startDate: e.target.value })}
                         />
                         <Input
                           type="text"
                           placeholder="End Date"
-                          value={activity.endDate}
+                          value={activity.endDate || ''}
                           onChange={(e) => updateSectionItem('activities', activity.id, { endDate: e.target.value })}
                         />
                       </div>
